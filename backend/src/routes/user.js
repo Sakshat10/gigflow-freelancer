@@ -1,4 +1,4 @@
-import { Router, Request, Response } from "express";
+import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import {
     hashPassword,
@@ -9,7 +9,7 @@ import {
 const router = Router();
 
 // GET /api/user/me - Get current user profile
-router.get("/me", async (req: Request, res: Response) => {
+router.get("/me", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
@@ -40,7 +40,7 @@ router.get("/me", async (req: Request, res: Response) => {
 });
 
 // PATCH /api/user/me - Update user profile
-router.patch("/me", async (req: Request, res: Response) => {
+router.patch("/me", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
@@ -96,7 +96,7 @@ router.patch("/me", async (req: Request, res: Response) => {
 });
 
 // PATCH /api/user/password - Change password
-router.patch("/password", async (req: Request, res: Response) => {
+router.patch("/password", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
@@ -147,7 +147,7 @@ router.patch("/password", async (req: Request, res: Response) => {
 });
 
 // GET /api/user/paypal - Get PayPal username
-router.get("/paypal", async (req: Request, res: Response) => {
+router.get("/paypal", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
@@ -167,7 +167,7 @@ router.get("/paypal", async (req: Request, res: Response) => {
 });
 
 // PATCH /api/user/paypal - Update PayPal username
-router.patch("/paypal", async (req: Request, res: Response) => {
+router.patch("/paypal", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
@@ -189,7 +189,7 @@ router.patch("/paypal", async (req: Request, res: Response) => {
 });
 
 // PATCH /api/user/plan - Update subscription plan
-router.patch("/plan", async (req: Request, res: Response) => {
+router.patch("/plan", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {

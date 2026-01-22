@@ -1,32 +1,32 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import { Request, Response } from "express";
+;
 
 const JWT_SECRET = process.env.JWT_SECRET || "fallback-secret-key";
 const COOKIE_NAME = "auth_token";
 
 export interface JWTPayload {
-    userId: string;
-    email: string;
+    userId;
+    email;
 }
 
 // Hash password
-export async function hashPassword(password: string): Promise<string> {
+export async function hashPassword(password): Promise {
     return bcrypt.hash(password, 12);
 }
 
 // Compare password with hash
-export async function verifyPassword(password: string, hash: string): Promise<boolean> {
+export async function verifyPassword(password, hash): Promise {
     return bcrypt.compare(password, hash);
 }
 
 // Generate JWT token
-export function generateToken(payload: JWTPayload): string {
+export function generateToken(payload) {
     return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
 }
 
 // Verify JWT token
-export function verifyToken(token: string): JWTPayload | null {
+export function verifyToken(token) {
     try {
         return jwt.verify(token, JWT_SECRET) as JWTPayload;
     } catch {
@@ -35,7 +35,7 @@ export function verifyToken(token: string): JWTPayload | null {
 }
 
 // Set JWT cookie (Express version with cross-origin support)
-export function setAuthCookie(res: Response, token: string): void {
+export function setAuthCookie(res: Response, token) {
     res.cookie(COOKIE_NAME, token, {
         httpOnly: true,
         secure: true, // Required for cross-origin (HTTPS)
@@ -46,7 +46,7 @@ export function setAuthCookie(res: Response, token: string): void {
 }
 
 // Clear JWT cookie (Express version)
-export function clearAuthCookie(res: Response): void {
+export function clearAuthCookie(res: Response) {
     res.clearCookie(COOKIE_NAME, {
         httpOnly: true,
         secure: true,
@@ -56,14 +56,14 @@ export function clearAuthCookie(res: Response): void {
 }
 
 // Get current user from request (Express version)
-export async function getCurrentUser(req: Request): Promise<JWTPayload | null> {
+export async function getCurrentUser(req: Request): Promise {
     const token = req.cookies?.[COOKIE_NAME];
     if (!token) return null;
     return verifyToken(token);
 }
 
 // Auth middleware helper
-export async function requireAuth(req: Request): Promise<JWTPayload> {
+export async function requireAuth(req: Request): Promise {
     const user = await getCurrentUser(req);
     if (!user) {
         throw new Error("Unauthorized");

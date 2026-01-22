@@ -1,11 +1,11 @@
-import { Router, Request, Response } from "express";
+import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { getCurrentUser } from "../lib/auth.js";
 
 const router = Router();
 
 // GET /api/notifications - Get all notifications for current user
-router.get("/", async (req: Request, res: Response) => {
+router.get("/", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
@@ -25,7 +25,7 @@ router.get("/", async (req: Request, res: Response) => {
 });
 
 // PATCH /api/notifications/:id/read - Mark notification as read
-router.patch("/:id/read", async (req: Request, res: Response) => {
+router.patch("/:id/read", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
@@ -53,7 +53,7 @@ router.patch("/:id/read", async (req: Request, res: Response) => {
 });
 
 // DELETE /api/notifications - Clear all notifications
-router.delete("/", async (req: Request, res: Response) => {
+router.delete("/", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {

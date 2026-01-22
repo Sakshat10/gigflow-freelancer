@@ -1,4 +1,4 @@
-import { Router, Request, Response } from "express";
+import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import {
     hashPassword,
@@ -11,7 +11,7 @@ import {
 const router = Router();
 
 // POST /api/auth/register
-router.post("/register", async (req: Request, res: Response) => {
+router.post("/register", async (req, res) => {
     try {
         const { email, password, name, paypalMeUsername } = req.body;
 
@@ -64,7 +64,7 @@ router.post("/register", async (req: Request, res: Response) => {
 });
 
 // POST /api/auth/login
-router.post("/login", async (req: Request, res: Response) => {
+router.post("/login", async (req, res) => {
     try {
         const { email, password } = req.body;
 
@@ -110,7 +110,7 @@ router.post("/login", async (req: Request, res: Response) => {
 });
 
 // GET /api/auth/me
-router.get("/me", async (req: Request, res: Response) => {
+router.get("/me", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
@@ -139,7 +139,7 @@ router.get("/me", async (req: Request, res: Response) => {
 });
 
 // POST /api/auth/logout
-router.post("/logout", (req: Request, res: Response) => {
+router.post("/logout", (req, res) => {
     res.clearCookie("auth_token", {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",

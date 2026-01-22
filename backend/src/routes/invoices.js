@@ -1,11 +1,11 @@
-import { Router, Request, Response } from "express";
+import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { getCurrentUser } from "../lib/auth.js";
 
 const router = Router();
 
 // GET /api/invoices - Get all invoices for current user
-router.get("/", async (req: Request, res: Response) => {
+router.get("/", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {

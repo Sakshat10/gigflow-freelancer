@@ -1,10 +1,10 @@
-import { Router, Request, Response } from "express";
+import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 
 const router = Router();
 
 // GET /api/client/:shareToken - Get workspace by share token
-router.get("/:shareToken", async (req: Request, res: Response) => {
+router.get("/:shareToken", async (req, res) => {
     try {
         const workspace = await prisma.workspace.findUnique({
             where: { shareToken: req.params.shareToken },
@@ -28,7 +28,7 @@ router.get("/:shareToken", async (req: Request, res: Response) => {
 });
 
 // GET /api/client/:shareToken/files/:fileId/comments
-router.get("/:shareToken/files/:fileId/comments", async (req: Request, res: Response) => {
+router.get("/:shareToken/files/:fileId/comments", async (req, res) => {
     try {
         const file = await prisma.file.findUnique({
             where: { id: req.params.fileId },
@@ -50,7 +50,7 @@ router.get("/:shareToken/files/:fileId/comments", async (req: Request, res: Resp
 });
 
 // POST /api/client/:shareToken/files/:fileId/comments
-router.post("/:shareToken/files/:fileId/comments", async (req: Request, res: Response) => {
+router.post("/:shareToken/files/:fileId/comments", async (req, res) => {
     try {
         const file = await prisma.file.findUnique({
             where: { id: req.params.fileId },
@@ -79,7 +79,7 @@ router.post("/:shareToken/files/:fileId/comments", async (req: Request, res: Res
 });
 
 // GET /api/client/:shareToken/invoices
-router.get("/:shareToken/invoices", async (req: Request, res: Response) => {
+router.get("/:shareToken/invoices", async (req, res) => {
     try {
         const workspace = await prisma.workspace.findUnique({
             where: { shareToken: req.params.shareToken },
@@ -98,7 +98,7 @@ router.get("/:shareToken/invoices", async (req: Request, res: Response) => {
 });
 
 // POST /api/client/:shareToken/invoices/:invoiceId/pay
-router.post("/:shareToken/invoices/:invoiceId/pay", async (req: Request, res: Response) => {
+router.post("/:shareToken/invoices/:invoiceId/pay", async (req, res) => {
     try {
         const invoice = await prisma.invoice.findUnique({
             where: { id: req.params.invoiceId },
@@ -123,7 +123,7 @@ router.post("/:shareToken/invoices/:invoiceId/pay", async (req: Request, res: Re
 });
 
 // GET /api/client/:shareToken/messages
-router.get("/:shareToken/messages", async (req: Request, res: Response) => {
+router.get("/:shareToken/messages", async (req, res) => {
     try {
         const workspace = await prisma.workspace.findUnique({
             where: { shareToken: req.params.shareToken },
@@ -146,7 +146,7 @@ router.get("/:shareToken/messages", async (req: Request, res: Response) => {
 });
 
 // POST /api/client/:shareToken/messages
-router.post("/:shareToken/messages", async (req: Request, res: Response) => {
+router.post("/:shareToken/messages", async (req, res) => {
     try {
         const workspace = await prisma.workspace.findUnique({
             where: { shareToken: req.params.shareToken },
@@ -174,7 +174,7 @@ router.post("/:shareToken/messages", async (req: Request, res: Response) => {
 });
 
 // GET /api/client/:shareToken/todos
-router.get("/:shareToken/todos", async (req: Request, res: Response) => {
+router.get("/:shareToken/todos", async (req, res) => {
     try {
         const workspace = await prisma.workspace.findUnique({
             where: { shareToken: req.params.shareToken },

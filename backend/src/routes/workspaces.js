@@ -1,4 +1,4 @@
-import { Router, Request, Response } from "express";
+import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { getCurrentUser } from "../lib/auth.js";
 import { v4 as uuidv4 } from "uuid";
@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 const router = Router();
 
 // GET /api/workspaces - List all workspaces for current user
-router.get("/", async (req: Request, res: Response) => {
+router.get("/", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
@@ -26,7 +26,7 @@ router.get("/", async (req: Request, res: Response) => {
 });
 
 // POST /api/workspaces - Create new workspace
-router.post("/", async (req: Request, res: Response) => {
+router.post("/", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
@@ -58,7 +58,7 @@ router.post("/", async (req: Request, res: Response) => {
 });
 
 // GET /api/workspaces/:id - Get specific workspace
-router.get("/:id", async (req: Request, res: Response) => {
+router.get("/:id", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
@@ -91,7 +91,7 @@ router.get("/:id", async (req: Request, res: Response) => {
 });
 
 // PATCH /api/workspaces/:id - Update workspace
-router.patch("/:id", async (req: Request, res: Response) => {
+router.patch("/:id", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
@@ -130,7 +130,7 @@ router.patch("/:id", async (req: Request, res: Response) => {
 });
 
 // DELETE /api/workspaces/:id - Delete workspace
-router.delete("/:id", async (req: Request, res: Response) => {
+router.delete("/:id", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
@@ -163,7 +163,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
 // ===== FILES =====
 
 // GET /api/workspaces/:id/files
-router.get("/:id/files", async (req: Request, res: Response) => {
+router.get("/:id/files", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
@@ -191,7 +191,7 @@ router.get("/:id/files", async (req: Request, res: Response) => {
 });
 
 // POST /api/workspaces/:id/files
-router.post("/:id/files", async (req: Request, res: Response) => {
+router.post("/:id/files", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
@@ -227,7 +227,7 @@ router.post("/:id/files", async (req: Request, res: Response) => {
 });
 
 // GET /api/workspaces/:id/files/:fileId
-router.get("/:id/files/:fileId", async (req: Request, res: Response) => {
+router.get("/:id/files/:fileId", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
@@ -251,7 +251,7 @@ router.get("/:id/files/:fileId", async (req: Request, res: Response) => {
 });
 
 // DELETE /api/workspaces/:id/files/:fileId
-router.delete("/:id/files/:fileId", async (req: Request, res: Response) => {
+router.delete("/:id/files/:fileId", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
@@ -279,7 +279,7 @@ router.delete("/:id/files/:fileId", async (req: Request, res: Response) => {
 });
 
 // POST /api/workspaces/:id/files/:fileId/comments
-router.post("/:id/files/:fileId/comments", async (req: Request, res: Response) => {
+router.post("/:id/files/:fileId/comments", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
@@ -315,7 +315,7 @@ router.post("/:id/files/:fileId/comments", async (req: Request, res: Response) =
 // ===== TODOS =====
 
 // GET /api/workspaces/:id/todos
-router.get("/:id/todos", async (req: Request, res: Response) => {
+router.get("/:id/todos", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
@@ -343,7 +343,7 @@ router.get("/:id/todos", async (req: Request, res: Response) => {
 });
 
 // POST /api/workspaces/:id/todos
-router.post("/:id/todos", async (req: Request, res: Response) => {
+router.post("/:id/todos", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
@@ -376,7 +376,7 @@ router.post("/:id/todos", async (req: Request, res: Response) => {
 });
 
 // PATCH /api/workspaces/:id/todos/:todoId
-router.patch("/:id/todos/:todoId", async (req: Request, res: Response) => {
+router.patch("/:id/todos/:todoId", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
@@ -410,7 +410,7 @@ router.patch("/:id/todos/:todoId", async (req: Request, res: Response) => {
 });
 
 // DELETE /api/workspaces/:id/todos/:todoId
-router.delete("/:id/todos/:todoId", async (req: Request, res: Response) => {
+router.delete("/:id/todos/:todoId", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
@@ -440,7 +440,7 @@ router.delete("/:id/todos/:todoId", async (req: Request, res: Response) => {
 // ===== MESSAGES =====
 
 // GET /api/workspaces/:id/messages
-router.get("/:id/messages", async (req: Request, res: Response) => {
+router.get("/:id/messages", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
@@ -468,7 +468,7 @@ router.get("/:id/messages", async (req: Request, res: Response) => {
 });
 
 // POST /api/workspaces/:id/messages
-router.post("/:id/messages", async (req: Request, res: Response) => {
+router.post("/:id/messages", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
@@ -503,7 +503,7 @@ router.post("/:id/messages", async (req: Request, res: Response) => {
 // ===== INVOICES =====
 
 // GET /api/workspaces/:id/invoices
-router.get("/:id/invoices", async (req: Request, res: Response) => {
+router.get("/:id/invoices", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
@@ -531,7 +531,7 @@ router.get("/:id/invoices", async (req: Request, res: Response) => {
 });
 
 // POST /api/workspaces/:id/invoices
-router.post("/:id/invoices", async (req: Request, res: Response) => {
+router.post("/:id/invoices", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
@@ -580,7 +580,7 @@ router.post("/:id/invoices", async (req: Request, res: Response) => {
 });
 
 // GET /api/workspaces/:id/invoices/:invoiceId
-router.get("/:id/invoices/:invoiceId", async (req: Request, res: Response) => {
+router.get("/:id/invoices/:invoiceId", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
@@ -604,7 +604,7 @@ router.get("/:id/invoices/:invoiceId", async (req: Request, res: Response) => {
 });
 
 // PATCH /api/workspaces/:id/invoices/:invoiceId
-router.patch("/:id/invoices/:invoiceId", async (req: Request, res: Response) => {
+router.patch("/:id/invoices/:invoiceId", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
@@ -640,7 +640,7 @@ router.patch("/:id/invoices/:invoiceId", async (req: Request, res: Response) => 
 });
 
 // DELETE /api/workspaces/:id/invoices/:invoiceId
-router.delete("/:id/invoices/:invoiceId", async (req: Request, res: Response) => {
+router.delete("/:id/invoices/:invoiceId", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
