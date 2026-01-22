@@ -1,7 +1,6 @@
 import { Server as HTTPServer } from "http";
 import { Server as SocketIOServer, Socket } from "socket.io";
 import { prisma } from "./prisma.js";
-import { createNotification } from "./notificationHelper.js";
 
 let io: SocketIOServer | null = null;
 
@@ -18,9 +17,16 @@ export interface ChatMessage {
 }
 
 export function initializeSocketServer(httpServer: HTTPServer) {
+    const allowedOrigins = [
+        "http://localhost:8080",
+        "http://localhost:3000",
+        "http://localhost:5173",
+        process.env.FRONTEND_URL,
+    ].filter(Boolean) as string[];
+
     io = new SocketIOServer(httpServer, {
         cors: {
-            origin: ["http://localhost:8080", "http://localhost:3000"],
+            origin: allowedOrigins,
             methods: ["GET", "POST"],
             credentials: true,
         },
@@ -62,16 +68,21 @@ export function initializeSocketServer(httpServer: HTTPServer) {
 
                 if (workspace && message.sender === "client") {
                     // Client sent message -> notify freelancer
-                    await createNotification({
-                        userId: workspace.userId,
-                        type: "message",
-                        title: "New message from client",
-                        description: message.text.length > 100
-                            ? message.text.substring(0, 100) + "..."
-                            : message.text,
-                        link: `/workspace/${message.workspaceId}?tab=chat`,
-                        workspaceId: message.workspaceId,
+                    // Create notification inline to avoid circular dependency
+                    const notification = await prisma.notification.create({
+                        data: {
+                            userId: workspace.userId,
+                            type: "message",
+                            title: "New message from client",
+                            description: message.text.length > 100
+                                ? message.text.substring(0, 100) + "..."
+                                : message.text,
+                            link: `/workspace/${message.workspaceId}?tab=chat`,
+                            workspaceId: message.workspaceId,
+                        },
                     });
+                    // Emit real-time notification
+                    io?.to(`user:${workspace.userId}`).emit('notification', notification);
                 } else if (workspace && message.sender === "freelancer") {
                     // Freelancer sent message -> emit client notification
                     const notification = {
