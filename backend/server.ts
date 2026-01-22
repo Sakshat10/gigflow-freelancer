@@ -9,16 +9,15 @@ import apiRouter from "./src/routes/index.js";
 const app = express();
 const PORT = parseInt(process.env.PORT || "5000", 10);
 
-// CORS configuration
+// CORS configuration - MUST be first
 const allowedOrigins = [
     "http://localhost:3000",
     "https://gigflow-freelancer-dun.vercel.app",
-    process.env.FRONTEND_URL
-].filter(Boolean);
+];
 
-app.use(cors({
-    origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps or curl requests)
+const corsOptions = {
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+        // Allow requests with no origin (like mobile apps, Postman, curl)
         if (!origin) return callback(null, true);
 
         if (allowedOrigins.includes(origin)) {
@@ -29,9 +28,16 @@ app.use(cors({
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-}));
+    allowedHeaders: ["Content-Type", "Authorization"],
+};
 
-// Middleware
+// Apply CORS middleware
+app.use(cors(corsOptions));
+
+// Handle OPTIONS preflight for all routes
+app.options("*", cors(corsOptions));
+
+// Other middleware
 app.use(express.json());
 app.use(cookieParser());
 
@@ -53,5 +59,6 @@ initializeSocketServer(httpServer);
 httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(`✓ Server running on port ${PORT}`);
     console.log(`✓ Environment: ${process.env.NODE_ENV || "development"}`);
+    console.log(`✓ CORS enabled for: ${allowedOrigins.join(", ")}`);
     console.log(`✓ Socket.io initialized`);
 });

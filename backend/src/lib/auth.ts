@@ -34,12 +34,12 @@ export function verifyToken(token: string): JWTPayload | null {
     }
 }
 
-// Set JWT cookie (Express version)
+// Set JWT cookie (Express version with cross-origin support)
 export function setAuthCookie(res: Response, token: string): void {
     res.cookie(COOKIE_NAME, token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        secure: true, // Required for cross-origin (HTTPS)
+        sameSite: "none", // Required for cross-origin
         maxAge: 60 * 60 * 24 * 7 * 1000, // 7 days in milliseconds
         path: "/",
     });
@@ -49,8 +49,8 @@ export function setAuthCookie(res: Response, token: string): void {
 export function clearAuthCookie(res: Response): void {
     res.clearCookie(COOKIE_NAME, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        secure: true,
+        sameSite: "none",
         path: "/",
     });
 }
