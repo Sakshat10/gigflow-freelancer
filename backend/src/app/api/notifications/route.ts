@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getCorsHeaders } from "@/lib/cors";
 import { PrismaClient } from "@prisma/client";
 import { getCurrentUser } from "@/lib/auth";
 
@@ -6,7 +7,7 @@ const prisma = new PrismaClient();
 
 // CORS headers
 const corsHeaders = {
-    "Access-Control-Allow-Origin": "http://localhost:8080",
+    "Access-Control-Allow-Origin": process.env.FRONTEND_URL || "http://localhost:8080",
     "Access-Control-Allow-Methods": "GET, PATCH, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Allow-Credentials": "true",

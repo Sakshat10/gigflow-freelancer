@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getCorsHeaders } from "@/lib/cors";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { writeFile, mkdir } from "fs/promises";
@@ -7,7 +8,7 @@ import { v4 as uuidv4 } from "uuid";
 
 // CORS headers
 const corsHeaders = {
-    "Access-Control-Allow-Origin": "http://localhost:8080",
+    "Access-Control-Allow-Origin": process.env.FRONTEND_URL || "http://localhost:8080",
     "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Allow-Credentials": "true",

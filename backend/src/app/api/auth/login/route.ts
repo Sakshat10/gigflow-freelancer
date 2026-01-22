@@ -7,21 +7,18 @@ import {
     successResponse,
     errorResponse,
 } from "@/lib/auth";
-
-// CORS headers
-const corsHeaders = {
-    "Access-Control-Allow-Origin": "http://localhost:8080", // Frontend origin
-    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Access-Control-Allow-Credentials": "true",
-};
+import { getCorsHeaders } from "@/lib/cors";
 
 // Handle OPTIONS request for CORS preflight
 export async function OPTIONS(request: NextRequest) {
-    return NextResponse.json({}, { headers: corsHeaders });
+    const origin = request.headers.get("origin");
+    return NextResponse.json({}, { headers: getCorsHeaders(origin) });
 }
 
 export async function POST(request: NextRequest) {
+    const origin = request.headers.get("origin");
+    const corsHeaders = getCorsHeaders(origin);
+
     try {
         const body = await request.json();
         const { email, password } = body;

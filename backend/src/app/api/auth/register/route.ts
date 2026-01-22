@@ -8,21 +8,18 @@ import {
     errorResponse,
 } from "@/lib/auth";
 import { v4 as uuidv4 } from "uuid";
-
-// CORS headers
-const corsHeaders = {
-    "Access-Control-Allow-Origin": "http://localhost:8080", // Frontend origin
-    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Access-Control-Allow-Credentials": "true",
-};
+import { getCorsHeaders } from "@/lib/cors";
 
 // Handle OPTIONS request for CORS preflight
 export async function OPTIONS(request: NextRequest) {
-    return NextResponse.json({}, { headers: corsHeaders });
+    const origin = request.headers.get("origin");
+    return NextResponse.json({}, { headers: getCorsHeaders(origin) });
 }
 
 export async function POST(request: NextRequest) {
+    const origin = request.headers.get("origin");
+    const corsHeaders = getCorsHeaders(origin);
+
     try {
         const body = await request.json();
         const { email, password, name, paypalMeUsername } = body;
@@ -84,7 +81,7 @@ export async function POST(request: NextRequest) {
         console.error("Registration error:", error);
         return NextResponse.json(
             { error: "Internal server error" },
-            { status: 500, headers: corsHeaders }
+            { status: 500, headers: getCorsHeaders(origin) }
         );
     }
 }
