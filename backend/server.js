@@ -1,21 +1,47 @@
+import express from "express";
+import cors from "cors";
+import cookieParser from "cookie-parser";
 import { createServer } from "http";
-import { parse } from "url";
-import next from "next";
 import { initializeSocketServer } from "./src/lib/socket.js";
-var dev = process.env.NODE_ENV !== "production";
-var hostname = process.env.NODE_ENV === "production" ? "0.0.0.0" : "localhost";
-var port = parseInt(process.env.PORT || "3000", 10);
-var app = next({ dev: dev, hostname: hostname, port: port });
-var handle = app.getRequestHandler();
-app.prepare().then(function () {
-    var httpServer = createServer(function (req, res) {
-        var parsedUrl = parse(req.url, true);
-        handle(req, res, parsedUrl);
-    });
-    // Initialize Socket.io
-    initializeSocketServer(httpServer);
-    httpServer.listen(port, function () {
-        console.log("> Ready on http://".concat(hostname, ":").concat(port));
-        console.log("> Socket.io server running");
-    });
+import apiRouter from "./src/routes/index.js";
+
+const app = express();
+
+// 🔥 CORS — SIMPLE, STATIC, SAFE
+app.use(
+    cors({
+        origin: [
+            "http://localhost:3000",
+            "https://gigflow-freelancer-dun.vercel.app",
+        ],
+        credentials: true,
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization"],
+    })
+);
+
+// 🔥 REQUIRED: OPTIONS preflight
+app.options("*", cors());
+
+app.use(express.json());
+app.use(cookieParser());
+
+// Health check
+app.get("/", (_req, res) => {
+    res.status(200).send("GigFlow API is running");
+});
+
+// API routes
+app.use("/api", apiRouter);
+
+// Create HTTP server for Socket.io
+const httpServer = createServer(app);
+
+// Initialize Socket.io
+initializeSocketServer(httpServer);
+
+// Start server
+const PORT = process.env.PORT || 5000;
+httpServer.listen(PORT, "0.0.0.0", () => {
+    console.log("✓ API running on port", PORT);
 });
