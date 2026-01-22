@@ -1,10 +1,9 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import { cookies } from "next/headers";
-import { NextRequest, NextResponse } from "next/server";
+import { Request, Response } from "express";
 
 const JWT_SECRET = process.env.JWT_SECRET || "fallback-secret-key";
-const COOKIE_NAME = "gigflow_token";
+const COOKIE_NAME = "auth_token";
 
 export interface JWTPayload {
     userId: string;
@@ -35,60 +34,39 @@ export function verifyToken(token: string): JWTPayload | null {
     }
 }
 
-// Set JWT cookie (for responses)
-export function setAuthCookie(response: NextResponse, token: string): void {
-    response.cookies.set(COOKIE_NAME, token, {
+// Set JWT cookie (Express version)
+export function setAuthCookie(res: Response, token: string): void {
+    res.cookie(COOKIE_NAME, token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 7, // 7 days
+        maxAge: 60 * 60 * 24 * 7 * 1000, // 7 days in milliseconds
         path: "/",
     });
 }
 
-// Clear JWT cookie (for logout)
-export function clearAuthCookie(response: NextResponse): void {
-    response.cookies.set(COOKIE_NAME, "", {
+// Clear JWT cookie (Express version)
+export function clearAuthCookie(res: Response): void {
+    res.clearCookie(COOKIE_NAME, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
-        maxAge: 0,
         path: "/",
     });
 }
 
-// Get current user from request
-export async function getCurrentUser(request: NextRequest): Promise<JWTPayload | null> {
-    const token = request.cookies.get(COOKIE_NAME)?.value;
+// Get current user from request (Express version)
+export async function getCurrentUser(req: Request): Promise<JWTPayload | null> {
+    const token = req.cookies?.[COOKIE_NAME];
     if (!token) return null;
     return verifyToken(token);
 }
 
-// Auth middleware helper - returns user or throws
-export async function requireAuth(request: NextRequest): Promise<JWTPayload> {
-    const user = await getCurrentUser(request);
+// Auth middleware helper
+export async function requireAuth(req: Request): Promise<JWTPayload> {
+    const user = await getCurrentUser(req);
     if (!user) {
         throw new Error("Unauthorized");
     }
     return user;
-}
-
-// Create unauthorized response
-export function unauthorizedResponse(message = "Unauthorized"): NextResponse {
-    return NextResponse.json({ error: message }, { status: 401 });
-}
-
-// Create forbidden response
-export function forbiddenResponse(message = "Forbidden"): NextResponse {
-    return NextResponse.json({ error: message }, { status: 403 });
-}
-
-// Create success response
-export function successResponse<T>(data: T, status = 200): NextResponse {
-    return NextResponse.json(data, { status });
-}
-
-// Create error response
-export function errorResponse(message: string, status = 400): NextResponse {
-    return NextResponse.json({ error: message }, { status });
 }
