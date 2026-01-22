@@ -6,11 +6,13 @@ import { initializeSocketServer } from "./src/lib/socket.js";
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = process.env.NODE_ENV === "production" ? "0.0.0.0" : "localhost";
-const port = parseInt(process.env.PORT || "3000", 10);
+// Use PORT from environment (Render sets this), fallback to 10000 for production, 3000 for dev
+const port = parseInt(process.env.PORT || (dev ? "3000" : "10000"), 10);
 
 console.log(`[Server] Starting in ${dev ? "development" : "production"} mode`);
 console.log(`[Server] NODE_ENV: ${process.env.NODE_ENV}`);
-console.log(`[Server] Port: ${port}`);
+console.log(`[Server] PORT from env: ${process.env.PORT}`);
+console.log(`[Server] Using port: ${port}`);
 console.log(`[Server] Hostname: ${hostname}`);
 
 const app = next({ dev, hostname, port });
