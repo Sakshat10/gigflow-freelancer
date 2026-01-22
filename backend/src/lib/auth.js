@@ -1,22 +1,16 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-;
 
 const JWT_SECRET = process.env.JWT_SECRET || "fallback-secret-key";
 const COOKIE_NAME = "auth_token";
 
-export interface JWTPayload {
-    userId;
-    email;
-}
-
 // Hash password
-export async function hashPassword(password): Promise {
+export async function hashPassword(password) {
     return bcrypt.hash(password, 12);
 }
 
 // Compare password with hash
-export async function verifyPassword(password, hash): Promise {
+export async function verifyPassword(password, hash) {
     return bcrypt.compare(password, hash);
 }
 
@@ -28,14 +22,14 @@ export function generateToken(payload) {
 // Verify JWT token
 export function verifyToken(token) {
     try {
-        return jwt.verify(token, JWT_SECRET) as JWTPayload;
+        return jwt.verify(token, JWT_SECRET);
     } catch {
         return null;
     }
 }
 
 // Set JWT cookie (Express version with cross-origin support)
-export function setAuthCookie(res: Response, token) {
+export function setAuthCookie(res, token) {
     res.cookie(COOKIE_NAME, token, {
         httpOnly: true,
         secure: true, // Required for cross-origin (HTTPS)
@@ -46,7 +40,7 @@ export function setAuthCookie(res: Response, token) {
 }
 
 // Clear JWT cookie (Express version)
-export function clearAuthCookie(res: Response) {
+export function clearAuthCookie(res) {
     res.clearCookie(COOKIE_NAME, {
         httpOnly: true,
         secure: true,
@@ -56,14 +50,14 @@ export function clearAuthCookie(res: Response) {
 }
 
 // Get current user from request (Express version)
-export async function getCurrentUser(req: Request): Promise {
+export async function getCurrentUser(req) {
     const token = req.cookies?.[COOKIE_NAME];
     if (!token) return null;
     return verifyToken(token);
 }
 
 // Auth middleware helper
-export async function requireAuth(req: Request): Promise {
+export async function requireAuth(req) {
     const user = await getCurrentUser(req);
     if (!user) {
         throw new Error("Unauthorized");

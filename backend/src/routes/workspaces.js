@@ -553,7 +553,11 @@ router.post("/:id/invoices", async (req, res) => {
             where: { id: currentUser.userId },
         });
 
-        const invoiceNumber = `INV-${(user!.invoiceCounter + 1).toString().padStart(4, "0")}`;
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        const invoiceNumber = `INV-${(user.invoiceCounter + 1).toString().padStart(4, "0")}`;
 
         const invoice = await prisma.invoice.create({
             data: {
