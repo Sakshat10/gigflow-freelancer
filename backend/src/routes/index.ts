@@ -1,10 +1,10 @@
 import { Router } from "express";
-import authRouter from "./auth.js";
-import userRouter from "./user.js";
-import workspacesRouter from "./workspaces.js";
-import notificationsRouter from "./notifications.js";
-import clientRouter from "./client.js";
-import invoicesRouter from "./invoices.js";
+import authRouter from "./auth";
+import userRouter from "./user";
+import workspacesRouter from "./workspaces";
+import notificationsRouter from "./notifications";
+import clientRouter from "./client";
+import invoicesRouter from "./invoices";
 
 const router = Router();
 
