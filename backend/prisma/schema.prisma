@@ -1,0 +1,117 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String   @id @default(uuid())
+  email            String   @unique
+  password         String
+  name             String
+  company          String?
+  plan             String   @default("free")
+  paypalMeUsername String?
+  invoiceCounter   Int      @default(0)
+  createdAt        DateTime @default(now())
+
+  workspaces    Workspace[]
+  notifications Notification[]
+}
+
+model Workspace {
+  id          String   @id @default(uuid())
+  userId      String
+  name        String
+  description String?
+  clientEmail String?
+  color       String   @default("blue")
+  shareToken  String   @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages Message[]
+  files    File[]
+  todos    Todo[]
+  invoices Invoice[]
+}
+
+model Message {
+  id          String   @id @default(uuid())
+  workspaceId String
+  sender      String   // "freelancer" | "client"
+  text        String
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model File {
+  id          String   @id @default(uuid())
+  workspaceId String
+  filename    String
+  size        Int
+  mimeType    String   @default("application/octet-stream")
+  uploadedBy  String
+  uploadedAt  DateTime @default(now())
+  fileUrl     String
+
+  workspace Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  comments  FileComment[]
+}
+
+model FileComment {
+  id        String   @id @default(uuid())
+  fileId    String
+  sender    String   // "freelancer" | "client"
+  text      String
+  createdAt DateTime @default(now())
+
+  file File @relation(fields: [fileId], references: [id], onDelete: Cascade)
+}
+
+model Todo {
+  id          String   @id @default(uuid())
+  workspaceId String
+  title       String
+  status      String   @default("todo") // todo | in-progress | done
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model Invoice {
+  id            String   @id @default(uuid())
+  workspaceId   String
+  amount        Float
+  dueDate       DateTime
+  status        String   @default("draft") // draft | sent | paid
+  pdfUrl        String?
+  invoiceNumber String?  @unique
+  paymentUrl    String?
+  currency      String   @default("USD")
+  createdAt     DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  userId      String
+  type        String   // "message", "invoice_paid", "task_updated"
+  title       String
+  description String  
+  link        String?
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  workspaceId String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
