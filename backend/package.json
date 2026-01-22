@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "node server.js",
+    "build": "echo 'No build needed - using plain JavaScript'",
     "start": "node server.js",
     "postinstall": "prisma generate"
   },
