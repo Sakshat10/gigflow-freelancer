@@ -18,13 +18,9 @@ export interface ChatMessage {
 }
 
 export function initializeSocketServer(httpServer: HTTPServer) {
-    const allowedOrigins = process.env.FRONTEND_URL 
-        ? [process.env.FRONTEND_URL, "http://localhost:8080", "http://localhost:3000"]
-        : ["http://localhost:8080", "http://localhost:3000"];
-
     io = new SocketIOServer(httpServer, {
         cors: {
-            origin: allowedOrigins,
+            origin: ["http://localhost:8080", "http://localhost:3000"],
             methods: ["GET", "POST"],
             credentials: true,
         },
