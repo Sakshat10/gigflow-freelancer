@@ -1,40 +1,57 @@
 import "dotenv/config";
+import express from "express";
+import cors from "cors";
+import cookieParser from "cookie-parser";
 import { createServer } from "http";
-import { parse } from "url";
-import next from "next";
 import { initializeSocketServer } from "./src/lib/socket.js";
+import apiRouter from "./src/routes/index.js";
 
-const dev = process.env.NODE_ENV !== "production";
-const hostname = process.env.NODE_ENV === "production" ? "0.0.0.0" : "localhost";
-// Use PORT from environment (Render sets this), fallback to 10000 for production, 3000 for dev
-const port = parseInt(process.env.PORT || (dev ? "3000" : "10000"), 10);
+const app = express();
+const PORT = parseInt(process.env.PORT || "5000", 10);
 
-console.log(`[Server] Starting in ${dev ? "development" : "production"} mode`);
-console.log(`[Server] NODE_ENV: ${process.env.NODE_ENV}`);
-console.log(`[Server] PORT from env: ${process.env.PORT}`);
-console.log(`[Server] Using port: ${port}`);
-console.log(`[Server] Hostname: ${hostname}`);
+// CORS configuration
+const allowedOrigins = [
+    "http://localhost:3000",
+    "https://gigflow-freelancer-dun.vercel.app",
+    process.env.FRONTEND_URL
+].filter(Boolean);
 
-const app = next({ dev, hostname, port });
-const handle = app.getRequestHandler();
+app.use(cors({
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
 
-app.prepare().then(() => {
-    console.log("[Server] Next.js app prepared successfully");
+        if (allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error("Not allowed by CORS"));
+        }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+}));
 
-    const httpServer = createServer((req, res) => {
-        const parsedUrl = parse(req.url!, true);
-        console.log(`[Server] ${req.method} ${req.url}`);
-        handle(req, res, parsedUrl);
-    });
+// Middleware
+app.use(express.json());
+app.use(cookieParser());
 
-    // Initialize Socket.io
-    initializeSocketServer(httpServer);
+// Health check endpoint
+app.get("/", (req, res) => {
+    res.send("GigFlow API is running");
+});
 
-    httpServer.listen(port, hostname, () => {
-        console.log(`> Ready on http://${hostname}:${port}`);
-        console.log(`> Socket.io server running`);
-    });
-}).catch((err) => {
-    console.error("[Server] Failed to start:", err);
-    process.exit(1);
+// API routes
+app.use("/api", apiRouter);
+
+// Create HTTP server for Socket.io
+const httpServer = createServer(app);
+
+// Initialize Socket.io
+initializeSocketServer(httpServer);
+
+// Start server
+httpServer.listen(PORT, "0.0.0.0", () => {
+    console.log(`✓ Server running on port ${PORT}`);
+    console.log(`✓ Environment: ${process.env.NODE_ENV || "development"}`);
+    console.log(`✓ Socket.io initialized`);
 });
