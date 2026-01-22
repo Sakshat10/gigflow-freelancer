@@ -1,5 +1,13 @@
 import { PrismaClient } from '@prisma/client';
-import { getIO } from './socket.js';
+
+// Import getIO dynamically to avoid circular dependency during Next.js build
+// The socket module is only available at runtime when the custom server is running
+let getIO: () => any = () => null;
+
+// This will be called after socket server is initialized
+export function setSocketGetter(getter: () => any) {
+    getIO = getter;
+}
 
 const prisma = new PrismaClient();
 
