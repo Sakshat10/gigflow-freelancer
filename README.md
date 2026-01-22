@@ -145,10 +145,6 @@ The backend connects to MongoDB Atlas. Update the `MONGODB_URI` in `backend/.env
 
 ---
 
-## 📝 Original Project Info
-
-**URL**: https://lovable.dev/projects/ff2fdba9-dfab-4615-afe4-fab278b979ec
-
 ## What technologies are used for this project?
 
 This project is built with:
