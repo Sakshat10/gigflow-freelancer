@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "npx tsx server.ts",
     "dev:next": "NEXT_DISABLE_TURBOPACK=1 next dev",
-    "build": "next build",
-    "start": "node server.js",
+    "build": "prisma generate && next build",
+    "start": "npx tsx server.ts",
+    "postinstall": "prisma generate",
     "lint": "eslint"
   },
   "dependencies": {
@@ -20,6 +21,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "socket.io": "^4.8.3",
+    "tsx": "^4.7.0",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
