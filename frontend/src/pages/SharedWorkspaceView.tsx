@@ -79,6 +79,7 @@ interface SharedWorkspace {
   invoices: Array<{
     id: string;
     amount: number;
+    taxPercentage?: number;
     dueDate: string;
     status: string;
     createdAt: string;
@@ -293,7 +294,7 @@ const SharedWorkspaceView: React.FC = () => {
       const response = await fetch(
         `${API_URL}/api/client/${id}/invoices/${selectedInvoice.id}/pay`,
         {
-          method: 'PATCH',
+          method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
@@ -838,7 +839,7 @@ const SharedWorkspaceView: React.FC = () => {
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-500">Amount Due</span>
-                        <span className="text-2xl font-bold text-primary">${selectedInvoice.amount.toFixed(2)}</span>
+                        <span className="text-2xl font-bold text-primary">${((selectedInvoice.amount || 0) * (1 + (selectedInvoice.taxPercentage || 0) / 100)).toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-500">Due Date</span>
