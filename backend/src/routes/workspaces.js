@@ -546,7 +546,7 @@ router.post("/:id/invoices", async (req, res) => {
             return res.status(403).json({ error: "Forbidden" });
         }
 
-        const { amount, dueDate, currency } = req.body;
+        const { amount, dueDate, currency, taxPercentage } = req.body;
 
         // Get user to increment invoice counter and check PayPal.me
         const user = await prisma.user.findUnique({
@@ -570,6 +570,7 @@ router.post("/:id/invoices", async (req, res) => {
             data: {
                 workspaceId: req.params.id,
                 amount: parseFloat(amount),
+                taxPercentage: parseFloat(taxPercentage) || 0,
                 dueDate: new Date(dueDate),
                 invoiceNumber,
                 currency: currency || "USD",
