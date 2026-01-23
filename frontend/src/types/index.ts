@@ -21,6 +21,7 @@ export interface Workspace {
   hasNewMessages?: boolean;
   clientEmail?: string;
   clientName?: string;
+  shareToken?: string;
 }
 
 export interface Invoice {
