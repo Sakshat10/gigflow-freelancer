@@ -94,7 +94,7 @@ export const fetchPaypalUsername = async (): Promise<string | null> => {
 // Update PayPal.Me username
 export const updatePaypalUsername = async (paypalMeUsername: string): Promise<string | null> => {
   const response = await fetch(`${API_URL}/api/user/paypal`, {
-    method: "POST",
+    method: "PATCH",
     headers: {
       "Content-Type": "application/json",
     },
