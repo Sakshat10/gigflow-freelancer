@@ -548,13 +548,20 @@ router.post("/:id/invoices", async (req, res) => {
 
         const { amount, dueDate, currency } = req.body;
 
-        // Get user to increment invoice counter
+        // Get user to increment invoice counter and check PayPal.me
         const user = await prisma.user.findUnique({
             where: { id: currentUser.userId },
         });
 
         if (!user) {
             return res.status(404).json({ error: "User not found" });
+        }
+
+        // Check if user has PayPal.me username set up
+        if (!user.paypalMeUsername || !user.paypalMeUsername.trim()) {
+            return res.status(400).json({
+                error: "Please set up your PayPal.me username in Settings before creating invoices"
+            });
         }
 
         const invoiceNumber = `INV-${(user.invoiceCounter + 1).toString().padStart(4, "0")}`;
