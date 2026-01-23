@@ -56,6 +56,11 @@ const Invoices: React.FC = () => {
     }).format(amount);
   };
 
+  // Helper to calculate total with tax
+  const getTotalWithTax = (inv: InvoiceWithWorkspace) => {
+    return (inv.amount || 0) * (1 + (inv.taxPercentage || 0) / 100);
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {
       case "paid":
@@ -88,14 +93,14 @@ const Invoices: React.FC = () => {
     }
   };
 
-  // Calculate summary stats
-  const totalAmount = invoices.reduce((sum, inv) => sum + inv.amount, 0);
+  // Calculate summary stats (with tax)
+  const totalAmount = invoices.reduce((sum, inv) => sum + getTotalWithTax(inv), 0);
   const paidAmount = invoices
     .filter((inv) => inv.status === "Paid")
-    .reduce((sum, inv) => sum + inv.amount, 0);
+    .reduce((sum, inv) => sum + getTotalWithTax(inv), 0);
   const pendingAmount = invoices
     .filter((inv) => inv.status === "Pending")
-    .reduce((sum, inv) => sum + inv.amount, 0);
+    .reduce((sum, inv) => sum + getTotalWithTax(inv), 0);
   const paidCount = invoices.filter((inv) => inv.status === "Paid").length;
   const pendingCount = invoices.filter((inv) => inv.status === "Pending").length;
 
@@ -251,8 +256,8 @@ const Invoices: React.FC = () => {
                       >
                         <div className="flex items-center gap-4">
                           <div className={`h-12 w-12 rounded-xl flex items-center justify-center transition-all duration-200 ${invoice.status === "Paid"
-                              ? "bg-gradient-to-br from-emerald-100 to-green-50 group-hover:from-emerald-200 group-hover:to-green-100"
-                              : "bg-gradient-to-br from-blue-100 to-indigo-50 group-hover:from-blue-200 group-hover:to-indigo-100"
+                            ? "bg-gradient-to-br from-emerald-100 to-green-50 group-hover:from-emerald-200 group-hover:to-green-100"
+                            : "bg-gradient-to-br from-blue-100 to-indigo-50 group-hover:from-blue-200 group-hover:to-indigo-100"
                             }`}>
                             <Receipt className={`h-5 w-5 ${invoice.status === "Paid" ? "text-emerald-600" : "text-blue-600"
                               }`} />
@@ -278,7 +283,7 @@ const Invoices: React.FC = () => {
                         </div>
                         <div className="flex items-center gap-5">
                           <div className="text-right">
-                            <p className="font-bold text-lg text-gray-900">{formatAmount(invoice.amount)}</p>
+                            <p className="font-bold text-lg text-gray-900">{formatAmount(getTotalWithTax(invoice))}</p>
                             <div className="mt-1">{getStatusBadge(invoice.status)}</div>
                           </div>
                           <ChevronRight className="h-5 w-5 text-gray-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all duration-200" />

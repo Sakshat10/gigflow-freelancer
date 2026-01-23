@@ -810,7 +810,7 @@ const Workspace: React.FC = () => {
 
                           <div className="flex items-center gap-6">
                             <div className="text-right">
-                              <p className="font-bold text-lg">${invoice.amount.toFixed(2)}</p>
+                              <p className="font-bold text-lg">${((invoice.amount || 0) * (1 + (invoice.taxPercentage || 0) / 100)).toFixed(2)}</p>
                               <Badge variant={invoice.status === 'Paid' ? 'outline' : 'secondary'} className={
                                 invoice.status === 'Paid'
                                   ? 'bg-green-50 text-green-700 border-green-200'

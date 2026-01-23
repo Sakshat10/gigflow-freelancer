@@ -789,7 +789,7 @@ const SharedWorkspaceView: React.FC = () => {
                             </div>
                             <div className="flex items-center gap-4">
                               <div className="text-right">
-                                <p className="font-bold text-lg">${invoice.amount.toFixed(2)}</p>
+                                <p className="font-bold text-lg">${((invoice.amount || 0) * (1 + (invoice.taxPercentage || 0) / 100)).toFixed(2)}</p>
                                 <Badge
                                   variant="outline"
                                   className={
