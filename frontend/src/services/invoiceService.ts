@@ -29,7 +29,7 @@ export const fetchAllInvoices = async (): Promise<InvoiceWithWorkspace[]> => {
         // Map backend invoices to frontend type
         return invoices.map((inv: any) => ({
             id: inv.id,
-            clientName: inv.workspaceName || 'Client',
+            clientName: inv.clientName || inv.workspaceName || 'Client',
             amount: inv.amount,
             status: inv.status === 'paid' ? 'Paid' : 'Pending' as const,
             date: inv.createdAt,
@@ -68,7 +68,7 @@ export const fetchInvoices = async (workspaceId?: string): Promise<Invoice[]> =>
         // Map backend invoices to frontend Invoice type
         return invoices.map((inv: any) => ({
             id: inv.id,
-            clientName: workspaceName,
+            clientName: inv.clientName || workspaceName,
             amount: inv.amount,
             status: inv.status === 'paid' ? 'Paid' : 'Pending' as const,
             date: inv.createdAt,
@@ -98,6 +98,7 @@ export const createInvoice = async (data: Partial<Invoice> & { currency?: string
             },
             credentials: 'include',
             body: JSON.stringify({
+                clientName: data.clientName || 'Client',
                 amount: data.amount || 0,
                 taxPercentage: data.taxPercentage || 0,
                 dueDate: data.dueDate || new Date().toISOString(),

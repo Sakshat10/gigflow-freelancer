@@ -90,6 +90,7 @@ model Todo {
 model Invoice {
   id            String   @id @default(uuid())
   workspaceId   String
+  clientName    String   @default("Client")
   amount        Float
   taxPercentage Float    @default(0)
   dueDate       DateTime
