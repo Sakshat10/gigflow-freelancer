@@ -65,6 +65,7 @@ export const createWorkspace = async (data: {
             hasNewMessages: false,
             clientEmail: dbWorkspace.clientEmail || undefined,
             clientName: dbWorkspace.name,
+            shareToken: dbWorkspace.shareToken,
         };
 
         console.log('Workspace created:', workspace);
@@ -102,6 +103,7 @@ export const fetchWorkspaces = async (): Promise<Workspace[]> => {
             hasNewMessages: false,
             clientEmail: ws.clientEmail || undefined,
             clientName: ws.name,
+            shareToken: ws.shareToken,
         }));
     } catch (error) {
         console.error('Error fetching workspaces:', error);
@@ -135,6 +137,7 @@ export const fetchWorkspace = async (id: string): Promise<Workspace | null> => {
             hasNewMessages: false,
             clientEmail: ws.clientEmail || undefined,
             clientName: ws.name,
+            shareToken: ws.shareToken,
         };
     } catch (error) {
         console.error('Error fetching workspace:', error);
