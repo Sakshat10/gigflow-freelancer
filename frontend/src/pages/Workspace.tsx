@@ -354,7 +354,7 @@ const Workspace: React.FC = () => {
   }, [loading, workspace, shouldShowTour, id, startTour]);
 
   const handleShareWorkspace = () => {
-    const shareableLink = `${window.location.origin}/share/${id}`;
+    const shareableLink = `${window.location.origin}/share/${workspace?.shareToken || id}`;
     navigator.clipboard.writeText(shareableLink).then(() => {
       toast.success("Link copied to clipboard!");
     });
