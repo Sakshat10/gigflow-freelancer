@@ -36,7 +36,7 @@ import InvoiceForm from "@/components/invoice/InvoiceForm";
 import KanbanBoard from "@/components/workspace/KanbanBoard";
 import TaskForm from "@/components/task/TaskForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { fetchInvoices } from "@/services/invoiceService";
+import { fetchInvoices, deleteInvoice } from "@/services/invoiceService";
 import { fetchTasks, updateTask as updateTaskService, deleteTask as deleteTaskService } from "@/services/taskService";
 import {
   fetchMessages,
@@ -834,11 +834,18 @@ const Workspace: React.FC = () => {
                                   <Download className="h-4 w-4" />
                                   Download PDF
                                 </DropdownMenuItem>
-                                <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
-                                  <ExternalLink className="h-4 w-4" />
-                                  Preview Link
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive">
+                                <DropdownMenuItem
+                                  className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive"
+                                  onClick={async () => {
+                                    const success = await deleteInvoice(invoice.id, id);
+                                    if (success) {
+                                      setInvoices(prev => prev.filter(inv => inv.id !== invoice.id));
+                                      toast.success("Invoice deleted");
+                                    } else {
+                                      toast.error("Failed to delete invoice");
+                                    }
+                                  }}
+                                >
                                   <Trash2 className="h-4 w-4" />
                                   Delete
                                 </DropdownMenuItem>
