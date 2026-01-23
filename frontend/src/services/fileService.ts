@@ -40,16 +40,30 @@ export async function fetchFiles(workspaceId: string): Promise<WorkspaceFile[]> 
     }
 }
 
-// Freelancer: Upload a file
+// Freelancer: Upload a file (converts to base64 data URL)
 export async function uploadFile(workspaceId: string, file: File): Promise<WorkspaceFile | null> {
     try {
-        const formData = new FormData();
-        formData.append("file", file);
+        // Convert file to base64 data URL
+        const fileUrl = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
 
         const response = await fetch(`${API_URL}/api/workspaces/${workspaceId}/files`, {
             method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
             credentials: "include",
-            body: formData,
+            body: JSON.stringify({
+                filename: file.name,
+                size: file.size,
+                mimeType: file.type || "application/octet-stream",
+                fileUrl: fileUrl,
+                uploadedBy: "freelancer",
+            }),
         });
 
         if (!response.ok) {
