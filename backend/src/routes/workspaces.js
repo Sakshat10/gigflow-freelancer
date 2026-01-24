@@ -182,6 +182,11 @@ router.get("/:id/files", async (req, res) => {
 
         const files = await prisma.file.findMany({
             where: { workspaceId: req.params.id },
+            include: {
+                comments: {
+                    orderBy: { createdAt: "asc" }
+                }
+            },
             orderBy: { createdAt: "desc" },
         });
 

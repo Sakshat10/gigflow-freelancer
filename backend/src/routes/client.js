@@ -43,6 +43,11 @@ router.get("/:shareToken/files", async (req, res) => {
 
         const files = await prisma.file.findMany({
             where: { workspaceId: workspace.id },
+            include: {
+                comments: {
+                    orderBy: { createdAt: "asc" }
+                }
+            },
             orderBy: { createdAt: "desc" },
         });
 
