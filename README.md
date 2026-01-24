@@ -1,23 +1,22 @@
 # Gigflow Freelancer - Monorepo
 
-A modern freelancer management platform built with React, Express, and MongoDB.
+A modern freelancer management platform built with React, Express, and PostgreSQL.
 
 ## 🏗️ Monorepo Structure
 
 ```
 gigflow-freelancer/
 ├── frontend/          # React + Vite frontend application
-├── backend/           # Express + MongoDB backend API
-├── shared/            # Shared types and utilities
-└── supabase/          # Legacy Supabase migrations (to be removed)
+├── backend/           # Express + PostgreSQL backend API
+└── shared/            # Shared types and utilities (if needed)
 ```
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- [Bun](https://bun.sh/) installed globally
-- MongoDB Atlas account (or local MongoDB)
-- Node.js 18+ (for compatibility)
+- Node.js 18+ 
+- PostgreSQL database (Neon, Supabase, or local)
+- Supabase account (for file storage)
 
 ### Installation
 
@@ -25,135 +24,173 @@ gigflow-freelancer/
    ```bash
    git clone <repository-url>
    cd gigflow-freelancer
-   bun install
+   
+   # Install backend dependencies
+   cd backend && npm install
+   
+   # Install frontend dependencies  
+   cd ../frontend && npm install
    ```
 
 2. **Set up environment variables:**
    ```bash
    # Copy backend environment template
    cp backend/.env.example backend/.env
-   # Edit backend/.env with your MongoDB URI and other config
+   # Edit backend/.env with your database URL, JWT secret, and Supabase config
    ```
 
-3. **Start development servers:**
+3. **Set up Supabase Storage:**
    ```bash
-   # Start both frontend and backend simultaneously
-   bun run dev
-   
-   # Or start them separately:
-   bun run dev:frontend  # Frontend on http://localhost:8080
-   bun run dev:backend   # Backend on http://localhost:3001
+   cd backend
+   node scripts/setup-supabase.js
    ```
 
-## 📦 Workspaces
+4. **Start development servers:**
+   ```bash
+   # Backend (from backend directory)
+   npm run dev  # Runs on http://localhost:5000
+   
+   # Frontend (from frontend directory)  
+   npm run dev  # Runs on http://localhost:5173
+   ```
 
-### Frontend (`@gigflow/frontend`)
-- **Tech Stack:** React 18, TypeScript, Vite, TailwindCSS
-- **Port:** 8080
-- **Scripts:**
-  - `bun run dev` - Start development server
-  - `bun run build` - Build for production
-  - `bun run lint` - Run ESLint
+## 📦 Project Structure
 
-### Backend (`@gigflow/backend`)
-- **Tech Stack:** Express, MongoDB, Socket.IO, JWT
-- **Port:** 3001
-- **Scripts:**
-  - `bun run dev` - Start development server with hot reload
-  - `bun run build` - Build for production
-  - `bun run start` - Start production server
-  - `bun run migrate` - Run database migrations
+### Frontend
+- **Tech Stack:** React 18, TypeScript, Vite, TailwindCSS, shadcn/ui
+- **Port:** 5173
+- **Features:** Dashboard, workspaces, file uploads, invoicing, real-time chat
 
-### Shared (`@gigflow/shared`)
-- **Purpose:** Shared TypeScript types and utilities
-- **Scripts:**
-  - `bun run build` - Compile TypeScript
-  - `bun run dev` - Watch mode compilation
+### Backend  
+- **Tech Stack:** Express, PostgreSQL, Prisma, Socket.IO, JWT, Supabase Storage
+- **Port:** 5000
+- **Features:** REST API, file uploads, authentication, real-time messaging
+
+## 📁 File Upload & Storage
+
+This project includes a complete file upload system using **Supabase Storage**:
+
+### Features
+- ✅ **Secure file uploads** (freelancers + clients)
+- ✅ **Private storage** with signed URLs for downloads
+- ✅ **10MB file size limit** (free tier friendly)
+- ✅ **Multiple file types** supported (images, documents, archives)
+- ✅ **Access control** (freelancers can delete, clients cannot)
+- ✅ **Cloud-native** (no local file storage)
+
+### Setup
+1. Create a Supabase project
+2. Add `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` to `backend/.env`
+3. Run `node scripts/setup-supabase.js` to create the storage bucket
+4. Start uploading files through the API!
+
+📖 **Detailed documentation:** See `backend/FILE_UPLOAD_README.md`
 
 ## 🛠️ Development Scripts
 
+### Backend
 ```bash
-# Development
-bun run dev                    # Start both frontend and backend
-bun run dev:frontend          # Start only frontend
-bun run dev:backend           # Start only backend
+cd backend
+npm run dev          # Start development server
+npm run build        # Build for production  
+npm run start        # Start production server
+```
 
-# Building
-bun run build                 # Build all workspaces
-bun run build:frontend        # Build only frontend
-bun run build:backend         # Build only backend
-bun run build:shared          # Build only shared package
-
-# Utilities
-bun run clean                 # Clean all build artifacts
-bun run install:all           # Reinstall all dependencies
-bun run migrate               # Run database migrations
+### Frontend
+```bash
+cd frontend
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run preview      # Preview production build
 ```
 
 ## 🔧 Configuration
 
 ### Environment Variables
 
-**Backend (`.env`):**
+**Backend (`backend/.env`):**
 ```env
-MONGODB_URI=mongodb+srv://...
-PORT=3001
-NODE_ENV=development
-FRONTEND_URL=http://localhost:8080
-JWT_SECRET=your-secret-key
-JWT_EXPIRES_IN=7d
+DATABASE_URL="postgresql://username:password@host:port/database"
+JWT_SECRET="your-jwt-secret-key"
+SUPABASE_URL="https://your-project.supabase.co"
+SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
 ```
 
-### Database Connection
-The backend connects to MongoDB Atlas. Update the `MONGODB_URI` in `backend/.env` with your connection string.
+⚠️ **Security:** Never expose `SUPABASE_SERVICE_ROLE_KEY` to the frontend!
 
 ## 🌐 API Endpoints
 
-- **Health Check:** `GET /health`
-- **API Base:** `http://localhost:3001/api`
-- **Auth:** `/api/auth/*`
-- **Users:** `/api/users/*`
-- **Workspaces:** `/api/workspaces/*`
-- **Messages:** `/api/messages/*`
-- **Invoices:** `/api/invoices/*`
-- **Files:** `/api/files/*`
+### Authentication
+- `POST /api/auth/login` - User login
+- `POST /api/auth/register` - User registration  
+- `GET /api/auth/me` - Get current user
 
-## 🔄 Migration Status
+### Workspaces
+- `GET /api/workspaces` - List user workspaces
+- `POST /api/workspaces` - Create workspace
+- `GET /api/workspaces/:id` - Get workspace details
 
-### ✅ Completed
-- Monorepo structure with Bun workspaces
-- Backend scaffolding with Express + MongoDB
-- Basic authentication routes
-- Database connection and models
-- Real-time Socket.IO setup
-- Frontend build configuration
-- TypeScript configuration for all workspaces
+### File Upload (Freelancer)
+- `POST /api/workspaces/:id/files` - Upload file
+- `GET /api/workspaces/:id/files` - List files
+- `GET /api/workspaces/:id/files/:fileId/download` - Get download URL
+- `DELETE /api/workspaces/:id/files/:fileId` - Delete file
 
-### 🚧 In Progress
-- Full CRUD API implementation
-- JWT authentication middleware
-- File upload system
-- Email notifications
-- Payment integration (PayPal + Razorpay)
+### File Upload (Client)
+- `POST /api/client/:shareToken/files` - Upload file
+- `GET /api/client/:shareToken/files` - List files  
+- `GET /api/client/:shareToken/files/:fileId/download` - Get download URL
 
-### 📋 Todo
-- Remove Supabase dependencies from frontend
-- Data migration from Supabase to MongoDB
-- Complete API integration in frontend
-- Production deployment setup
-- Testing suite setup
+### Real-time Features
+- Socket.IO for live messaging
+- File upload notifications
+- Workspace activity updates
+
+## 🔄 Database Schema
+
+Using **Prisma** with PostgreSQL:
+
+- **Users** - Freelancer accounts with authentication
+- **Workspaces** - Project containers with share tokens
+- **Files** - File metadata with Supabase storage URLs
+- **Messages** - Real-time chat between freelancers and clients
+- **Invoices** - Billing and payment tracking
+- **Todos** - Task management per workspace
+
+## 🚀 Deployment
+
+### Backend
+- Deploy to Vercel, Railway, or any Node.js hosting
+- Set environment variables in production
+- Ensure PostgreSQL database is accessible
+
+### Frontend  
+- Deploy to Vercel, Netlify, or any static hosting
+- Build with `npm run build`
+- Configure API base URL for production
+
+### File Storage
+- Supabase Storage handles all file operations
+- No server storage needed (cloud-native)
+- Automatic scaling and CDN distribution
 
 ---
 
-## What technologies are used for this project?
+## 🛡️ Security Features
 
-This project is built with:
+- **JWT Authentication** with secure token handling
+- **Private file storage** with time-limited signed URLs  
+- **Input validation** and file type restrictions
+- **CORS protection** with allowed origins
+- **SQL injection protection** via Prisma ORM
+- **Environment variable isolation** (no secrets in frontend)
 
-- Vite
-- TypeScript  
-- React
-- shadcn-ui
-- Tailwind CSS
-- Express.js
-- MongoDB
-- Socket.IO
+## 🎯 Key Technologies
+
+- **Frontend:** React, TypeScript, Vite, TailwindCSS, shadcn/ui
+- **Backend:** Express.js, Node.js, Prisma ORM
+- **Database:** PostgreSQL (Neon/Supabase)
+- **Storage:** Supabase Storage (private buckets)
+- **Real-time:** Socket.IO
+- **Authentication:** JWT tokens
+- **File Handling:** Multer + Supabase Storage
