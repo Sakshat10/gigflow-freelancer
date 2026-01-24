@@ -1,5 +1,8 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
+import { uploadSingle, handleUploadError } from "../lib/upload.js";
+import { uploadFile, getSignedUrl } from "../lib/supabase.js";
+import { v4 as uuidv4 } from "uuid";
 
 const router = Router();
 
@@ -23,6 +26,112 @@ router.get("/:shareToken", async (req, res) => {
         return res.json({ workspace });
     } catch (error) {
         console.error("Get client workspace error:", error);
+        return res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// GET /api/client/:shareToken/files
+router.get("/:shareToken/files", async (req, res) => {
+    try {
+        const workspace = await prisma.workspace.findUnique({
+            where: { shareToken: req.params.shareToken },
+        });
+
+        if (!workspace) {
+            return res.status(404).json({ error: "Workspace not found" });
+        }
+
+        const files = await prisma.file.findMany({
+            where: { workspaceId: workspace.id },
+            orderBy: { createdAt: "desc" },
+        });
+
+        return res.json({ files });
+    } catch (error) {
+        console.error("Get client files error:", error);
+        return res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// POST /api/client/:shareToken/files - Upload file (Client)
+router.post("/:shareToken/files", uploadSingle, handleUploadError, async (req, res) => {
+    try {
+        const workspace = await prisma.workspace.findUnique({
+            where: { shareToken: req.params.shareToken },
+        });
+
+        if (!workspace) {
+            return res.status(404).json({ error: "Workspace not found" });
+        }
+
+        if (!req.file) {
+            return res.status(400).json({ error: "No file uploaded" });
+        }
+
+        // Upload to Supabase Storage
+        const uploadResult = await uploadFile(
+            workspace.id,
+            req.file.originalname,
+            req.file.buffer,
+            req.file.mimetype
+        );
+
+        if (!uploadResult.success) {
+            return res.status(500).json({ error: `Upload failed: ${uploadResult.error}` });
+        }
+
+        // Save file metadata to database
+        const file = await prisma.file.create({
+            data: {
+                workspaceId: workspace.id,
+                filename: req.file.originalname,
+                storagePath: uploadResult.storagePath,
+                size: req.file.size,
+                uploadedBy: "client",
+                fileUrl: uploadResult.storagePath, // For backward compatibility
+            },
+        });
+
+        return res.status(201).json({ file });
+    } catch (error) {
+        console.error("Client upload file error:", error);
+        return res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// GET /api/client/:shareToken/files/:fileId/download - Get signed URL for file download
+router.get("/:shareToken/files/:fileId/download", async (req, res) => {
+    try {
+        const file = await prisma.file.findUnique({
+            where: { id: req.params.fileId },
+            include: { workspace: true },
+        });
+
+        if (!file || file.workspace.shareToken !== req.params.shareToken) {
+            return res.status(404).json({ error: "File not found" });
+        }
+
+        // Handle legacy files (before Supabase migration)
+        if (!file.storagePath) {
+            return res.status(410).json({ 
+                error: "File no longer available. This file was uploaded before the storage migration." 
+            });
+        }
+
+        // Generate signed URL (expires in 5 minutes)
+        const signedUrlResult = await getSignedUrl(file.storagePath, 300);
+
+        if (!signedUrlResult.success) {
+            return res.status(500).json({ error: `Download failed: ${signedUrlResult.error}` });
+        }
+
+        return res.json({ 
+            downloadUrl: signedUrlResult.signedUrl,
+            filename: file.filename,
+            expiresIn: 300 // 5 minutes
+        });
+    } catch (error) {
+        console.error("Get client file download URL error:", error);
         return res.status(500).json({ error: "Internal server error" });
     }
 });
