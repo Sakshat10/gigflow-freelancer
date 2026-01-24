@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { supabase, STORAGE_BUCKET, uploadFile, getSignedUrl, deleteFile } from '../src/lib/supabase.js';
 
 /**
