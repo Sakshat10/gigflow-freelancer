@@ -101,9 +101,11 @@ export async function addFileComment(
                 body: JSON.stringify({ text }),
             }
         );
-
+        
         if (!response.ok) {
             console.error("Failed to add comment:", response.status);
+            const errorData = await response.json().catch(() => ({}));
+            console.error("Error details:", errorData);
             return null;
         }
 
@@ -135,6 +137,8 @@ export async function addFileCommentAsClient(
 
         if (!response.ok) {
             console.error("Failed to add comment:", response.status);
+            const errorData = await response.json().catch(() => ({}));
+            console.error("Error details:", errorData);
             return null;
         }
 
