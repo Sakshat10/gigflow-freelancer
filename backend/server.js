@@ -11,9 +11,9 @@ const app = express();
 app.use(
     cors({
         origin: [
-            "http://localhost:3000",
-            "http://localhost:5173", // Vite dev server
-            "https://gigflow-freelancer-dun.vercel.app",
+            "http://localhost:8080", // Local frontend
+            "http://localhost:3000", // Backend port (for testing)
+            "https://gigflow-freelancer-dun.vercel.app", // Production frontend
         ],
         credentials: true,
         methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -42,7 +42,7 @@ const httpServer = createServer(app);
 initializeSocketServer(httpServer);
 
 // Start server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, "0.0.0.0", () => {
     console.log("✓ API running on port", PORT);
 });
