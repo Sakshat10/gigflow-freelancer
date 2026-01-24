@@ -131,6 +131,7 @@ const Workspace: React.FC = () => {
     if (!newFileComment.trim() || !id) return;
 
     const comment = await addFileComment(id, fileId, newFileComment.trim());
+    
     if (comment) {
       setUploadedFiles(prev => prev.map(file => {
         if (file.id === fileId) {
