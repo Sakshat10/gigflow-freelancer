@@ -36,6 +36,7 @@ import InvoiceForm from "@/components/invoice/InvoiceForm";
 import KanbanBoard from "@/components/workspace/KanbanBoard";
 import TaskForm from "@/components/task/TaskForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { fetchInvoices, deleteInvoice } from "@/services/invoiceService";
 import { fetchTasks, updateTask as updateTaskService, deleteTask as deleteTaskService } from "@/services/taskService";
 import {
@@ -65,7 +66,7 @@ import { Invoice, Thing } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { MoreVertical, Download, ExternalLink, Trash2, Clock } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const Workspace: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -105,8 +106,15 @@ const Workspace: React.FC = () => {
     try {
       for (const file of Array.from(files)) {
         const uploadedFile = await uploadFile(id, file);
+        
         if (uploadedFile) {
-          setUploadedFiles(prev => [uploadedFile, ...prev]);
+          // Ensure the uploaded file has all required fields
+          const fileWithDefaults = {
+            ...uploadedFile,
+            comments: uploadedFile.comments || []
+          };
+          
+          setUploadedFiles(prev => [fileWithDefaults, ...prev]);
         }
       }
       toast.success(`${files.length} file(s) uploaded`);
@@ -199,11 +207,31 @@ const Workspace: React.FC = () => {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  // Get file icon based on type
-  const getFileIcon = (type: string) => {
-    if (type.startsWith('image/')) return <Image className="h-5 w-5 text-blue-500" />;
-    if (type.startsWith('video/')) return <FileVideo className="h-5 w-5 text-purple-500" />;
-    if (type.startsWith('audio/')) return <FileAudio className="h-5 w-5 text-green-500" />;
+  // Get file icon based on filename extension
+  const getFileIcon = (filename: string) => {
+    const extension = filename.toLowerCase().split('.').pop() || '';
+    
+    // Image files
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension)) {
+      return <Image className="h-5 w-5 text-blue-500" />;
+    }
+    
+    // Video files
+    if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm'].includes(extension)) {
+      return <FileVideo className="h-5 w-5 text-purple-500" />;
+    }
+    
+    // Audio files
+    if (['mp3', 'wav', 'flac', 'aac', 'ogg'].includes(extension)) {
+      return <FileAudio className="h-5 w-5 text-green-500" />;
+    }
+    
+    // Document files
+    if (['pdf', 'doc', 'docx', 'txt', 'rtf'].includes(extension)) {
+      return <FileText className="h-5 w-5 text-red-500" />;
+    }
+    
+    // Default file icon
     return <File className="h-5 w-5 text-gray-500" />;
   };
   const shouldShowTour = searchParams.get('tour') === 'true';
@@ -550,7 +578,8 @@ const Workspace: React.FC = () => {
                   </Button>
                 </CardHeader>
                 <CardContent>
-                  {uploadedFiles.length === 0 ? (
+                  <ErrorBoundary fallback={<div className="p-4 text-red-600">Error loading files</div>}>
+                    {uploadedFiles.length === 0 ? (
                     <div
                       className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all cursor-pointer ${isDragging ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-primary/50'}`}
                       onDragOver={handleDragOver}
@@ -566,24 +595,26 @@ const Workspace: React.FC = () => {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {uploadedFiles.map((file) => (
-                        <div
-                          key={file.id}
-                          className="rounded-xl border border-gray-100 overflow-hidden transition-all"
-                        >
-                          {/* File Header */}
-                          <div className="flex items-center justify-between p-4 hover:bg-primary/5 group">
-                            <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
-                                {getFileIcon(file.type)}
-                              </div>
-                              <div>
-                                <p className="font-medium text-sm">{file.filename}</p>
-                                <p className="text-xs text-gray-500">
-                                  {formatFileSize(file.size)} • {new Date(file.createdAt).toLocaleDateString()}
-                                </p>
-                              </div>
-                            </div>
+                      {uploadedFiles.map((file) => {
+                        try {
+                          return (
+                            <div
+                              key={file.id}
+                              className="rounded-xl border border-gray-100 overflow-hidden transition-all"
+                            >
+                              {/* File Header */}
+                              <div className="flex items-center justify-between p-4 hover:bg-primary/5 group">
+                                <div className="flex items-center gap-3">
+                                  <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                                    {getFileIcon(file.filename)}
+                                  </div>
+                                  <div>
+                                    <p className="font-medium text-sm">{file.filename}</p>
+                                    <p className="text-xs text-gray-500">
+                                      {formatFileSize(file.size)} • {new Date(file.createdAt).toLocaleDateString()}
+                                    </p>
+                                  </div>
+                                </div>
                             <div className="flex items-center gap-2">
                               {/* Comments toggle button */}
                               <Button
@@ -674,7 +705,16 @@ const Workspace: React.FC = () => {
                             </div>
                           )}
                         </div>
-                      ))}
+                          );
+                        } catch (error) {
+                          console.error('Error rendering file:', file, error);
+                          return (
+                            <div key={file.id} className="p-4 border border-red-200 rounded-xl bg-red-50">
+                              <p className="text-red-600 text-sm">Error displaying file: {file.filename || 'Unknown'}</p>
+                            </div>
+                          );
+                        }
+                      })}
                       <div
                         className={`border-2 border-dashed rounded-xl p-6 text-center transition-all cursor-pointer ${isDragging ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-primary/50'}`}
                         onDragOver={handleDragOver}
@@ -686,6 +726,7 @@ const Workspace: React.FC = () => {
                       </div>
                     </div>
                   )}
+                  </ErrorBoundary>
                 </CardContent>
               </Card>
             </FadeIn>
