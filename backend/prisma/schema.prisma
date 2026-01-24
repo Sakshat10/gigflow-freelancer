@@ -57,11 +57,11 @@ model File {
   id          String   @id @default(uuid())
   workspaceId String
   filename    String
+  storagePath String?  // Nullable for migration
   size        Int
-  mimeType    String   @default("application/octet-stream")
-  uploadedBy  String
-  uploadedAt  DateTime @default(now())
-  fileUrl     String
+  uploadedBy  String   // "freelancer" | "client"
+  fileUrl     String   // For backward compatibility, will store storage path
+  createdAt   DateTime @default(now())
 
   workspace Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   comments  FileComment[]
