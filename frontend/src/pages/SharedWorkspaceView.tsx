@@ -61,7 +61,7 @@ interface SharedWorkspace {
     filename: string;
     size: number;
     uploadedBy: string;
-    uploadedAt: string;
+    createdAt: string;
     fileUrl: string;
   }>;
   messages: Array<{
@@ -545,7 +545,7 @@ const SharedWorkspaceView: React.FC = () => {
                                 <div>
                                   <p className="font-medium">{file.filename}</p>
                                   <p className="text-xs text-gray-500">
-                                    {formatFileSize(file.size)} • {formatDate(file.uploadedAt)}
+                                    {formatFileSize(file.size)} • {formatDate(file.createdAt)}
                                   </p>
                                 </div>
                               </div>

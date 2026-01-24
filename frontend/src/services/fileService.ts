@@ -13,11 +13,11 @@ export interface WorkspaceFile {
     workspaceId: string;
     filename: string;
     size: number;
-    mimeType: string;
     uploadedBy: string;
-    uploadedAt: string;
+    createdAt: string; // Changed from uploadedAt to match backend
     fileUrl: string;
-    comments: FileComment[];
+    storagePath?: string; // Added to match backend
+    comments?: FileComment[]; // Made optional since it might not always be included
 }
 
 // Freelancer: Get all files for a workspace

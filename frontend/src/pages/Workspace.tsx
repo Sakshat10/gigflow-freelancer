@@ -53,6 +53,7 @@ import {
   uploadFile,
   deleteFile,
   addFileComment,
+  getFileDownloadUrl,
   WorkspaceFile,
   FileComment,
 } from "@/services/fileService";
@@ -127,7 +128,7 @@ const Workspace: React.FC = () => {
         if (file.id === fileId) {
           return {
             ...file,
-            comments: [...file.comments, comment],
+            comments: [...(file.comments || []), comment],
           };
         }
         return file;
@@ -168,6 +169,29 @@ const Workspace: React.FC = () => {
     }
   };
 
+  // Handle file download
+  const handleDownloadFile = async (fileId: string, filename: string) => {
+    if (!id) return;
+
+    try {
+      const downloadUrl = await getFileDownloadUrl(id, fileId);
+      if (downloadUrl) {
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success('Download started');
+      } else {
+        toast.error('Failed to get download URL');
+      }
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Failed to download file');
+    }
+  };
+
   // Format file size
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
@@ -204,16 +228,18 @@ const Workspace: React.FC = () => {
       if (!id) return;
       setLoading(true);
       try {
-        const [wsData, invData, taskData, msgData] = await Promise.all([
+        const [wsData, invData, taskData, msgData, filesData] = await Promise.all([
           fetchWorkspace(id),
           fetchInvoices(id),
           fetchTasks(id),
-          fetchMessages(id)
+          fetchMessages(id),
+          fetchFiles(id)
         ]);
         setWorkspace(wsData);
         setInvoices(invData);
         setTasks(taskData);
         setMessages(msgData);
+        setUploadedFiles(filesData);
       } catch (error) {
         console.error("Error loading workspace data:", error);
         toast.error("Failed to load workspace data");
@@ -552,9 +578,9 @@ const Workspace: React.FC = () => {
                                 {getFileIcon(file.type)}
                               </div>
                               <div>
-                                <p className="font-medium text-sm">{file.name}</p>
+                                <p className="font-medium text-sm">{file.filename}</p>
                                 <p className="text-xs text-gray-500">
-                                  {formatFileSize(file.size)} • {file.uploadedAt.toLocaleDateString()}
+                                  {formatFileSize(file.size)} • {new Date(file.createdAt).toLocaleDateString()}
                                 </p>
                               </div>
                             </div>
@@ -567,7 +593,7 @@ const Workspace: React.FC = () => {
                                 onClick={() => setExpandedFileId(expandedFileId === file.id ? null : file.id)}
                               >
                                 <MessageCircle className="h-4 w-4 mr-1" />
-                                <span className="text-xs">{file.comments.length}</span>
+                                <span className="text-xs">{file.comments?.length || 0}</span>
                                 {expandedFileId === file.id ? (
                                   <ChevronUp className="h-3 w-3 ml-1" />
                                 ) : (
@@ -578,7 +604,7 @@ const Workspace: React.FC = () => {
                                 variant="ghost"
                                 size="icon"
                                 className="rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={() => window.open(file.url, '_blank')}
+                                onClick={() => handleDownloadFile(file.id, file.filename)}
                               >
                                 <Download className="h-4 w-4" />
                               </Button>
@@ -597,7 +623,7 @@ const Workspace: React.FC = () => {
                           {expandedFileId === file.id && (
                             <div className="border-t border-gray-100 bg-gray-50/50 p-4">
                               {/* Comment List */}
-                              {file.comments.length > 0 ? (
+                              {file.comments && file.comments.length > 0 ? (
                                 <div className="space-y-3 mb-4 max-h-48 overflow-y-auto">
                                   {file.comments.map((comment) => (
                                     <div
@@ -612,7 +638,7 @@ const Workspace: React.FC = () => {
                                       >
                                         <p className="text-sm">{comment.text}</p>
                                         <p className={`text-xs mt-1 ${comment.sender === 'freelancer' ? 'text-white/70' : 'text-gray-400'}`}>
-                                          {comment.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                          {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </p>
                                       </div>
                                     </div>

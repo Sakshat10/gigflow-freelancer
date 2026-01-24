@@ -12,7 +12,7 @@ interface FileItem {
   size: number;
   mimeType: string;
   uploadedBy: string;
-  uploadedAt: string;
+  createdAt: string;
 }
 
 interface FileUploadDemoProps {
@@ -245,7 +245,7 @@ export function FileUploadDemo({ workspaceId, shareToken, isClient = false }: Fi
                 <div className="flex-1">
                   <div className="font-medium">{file.filename}</div>
                   <div className="text-sm text-muted-foreground">
-                    {formatFileSize(file.size)} • Uploaded by {file.uploadedBy} • {new Date(file.uploadedAt).toLocaleDateString()}
+                    {formatFileSize(file.size)} • Uploaded by {file.uploadedBy} • {new Date(file.createdAt).toLocaleDateString()}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
