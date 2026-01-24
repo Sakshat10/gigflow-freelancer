@@ -4,6 +4,7 @@ import { Input } from './ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Upload, Download, Trash2, File } from 'lucide-react';
 import { useToast } from './ui/use-toast';
+import { getFileDownloadUrl } from '../services/fileService';
 
 interface FileItem {
   id: string;
@@ -123,19 +124,15 @@ export function FileUploadDemo({ workspaceId, shareToken, isClient = false }: Fi
   // Download file
   const handleDownload = async (fileId: string, filename: string) => {
     try {
-      const response = await fetch(`${getApiUrl()}/${fileId}/download`, {
-        headers: getHeaders()
-      });
-
-      if (!response.ok) {
-        throw new Error('Download failed');
+      const downloadUrl = await getFileDownloadUrl(workspaceId || '', fileId, shareToken);
+      
+      if (!downloadUrl) {
+        throw new Error('Failed to get download URL');
       }
-
-      const data = await response.json();
       
       // Create download link
       const link = document.createElement('a');
-      link.href = data.downloadUrl;
+      link.href = downloadUrl;
       link.download = filename;
       document.body.appendChild(link);
       link.click();

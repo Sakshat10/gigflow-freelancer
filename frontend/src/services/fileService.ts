@@ -40,34 +40,23 @@ export async function fetchFiles(workspaceId: string): Promise<WorkspaceFile[]> 
     }
 }
 
-// Freelancer: Upload a file (converts to base64 data URL)
+// Freelancer: Upload a file (using FormData for multipart upload)
 export async function uploadFile(workspaceId: string, file: File): Promise<WorkspaceFile | null> {
     try {
-        // Convert file to base64 data URL
-        const fileUrl = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-        });
+        // Create FormData for multipart upload
+        const formData = new FormData();
+        formData.append('file', file);
 
         const response = await fetch(`${API_URL}/api/workspaces/${workspaceId}/files`, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
             credentials: "include",
-            body: JSON.stringify({
-                filename: file.name,
-                size: file.size,
-                mimeType: file.type || "application/octet-stream",
-                fileUrl: fileUrl,
-                uploadedBy: "freelancer",
-            }),
+            body: formData, // Send as FormData, not JSON
         });
 
         if (!response.ok) {
             console.error("Failed to upload file:", response.status);
+            const errorData = await response.json().catch(() => ({}));
+            console.error("Error details:", errorData);
             return null;
         }
 
@@ -177,5 +166,78 @@ export async function fetchFileCommentsAsClient(
     } catch (error) {
         console.error("Error fetching comments:", error);
         return [];
+    }
+}
+
+// Client: Upload a file (using FormData for multipart upload)
+export async function uploadFileAsClient(shareToken: string, file: File): Promise<WorkspaceFile | null> {
+    try {
+        // Create FormData for multipart upload
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch(`${API_URL}/api/client/${shareToken}/files`, {
+            method: "POST",
+            body: formData, // Send as FormData, not JSON
+        });
+
+        if (!response.ok) {
+            console.error("Failed to upload file:", response.status);
+            const errorData = await response.json().catch(() => ({}));
+            console.error("Error details:", errorData);
+            return null;
+        }
+
+        const data = await response.json();
+        return data.file;
+    } catch (error) {
+        console.error("Error uploading file:", error);
+        return null;
+    }
+}
+
+// Client: Get all files for a workspace (no auth)
+export async function fetchFilesAsClient(shareToken: string): Promise<WorkspaceFile[]> {
+    try {
+        const response = await fetch(`${API_URL}/api/client/${shareToken}/files`);
+
+        if (!response.ok) {
+            console.error("Failed to fetch files:", response.status);
+            return [];
+        }
+
+        const data = await response.json();
+        return data.files || [];
+    } catch (error) {
+        console.error("Error fetching files:", error);
+        return [];
+    }
+}
+
+// Get file download URL (works for both freelancer and client)
+export async function getFileDownloadUrl(
+    workspaceId: string, 
+    fileId: string, 
+    shareToken?: string
+): Promise<string | null> {
+    try {
+        const url = shareToken 
+            ? `${API_URL}/api/client/${shareToken}/files/${fileId}/download`
+            : `${API_URL}/api/workspaces/${workspaceId}/files/${fileId}/download`;
+
+        const response = await fetch(url, {
+            credentials: shareToken ? "omit" : "include",
+        });
+
+        if (!response.ok) {
+            console.error("Failed to get download URL:", response.status);
+            return null;
+        }
+
+        const data = await response.json();
+        return data.downloadUrl;
+    } catch (error) {
+        console.error("Error getting download URL:", error);
+        return null;
     }
 }

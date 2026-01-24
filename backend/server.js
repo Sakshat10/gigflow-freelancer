@@ -12,6 +12,7 @@ app.use(
     cors({
         origin: [
             "http://localhost:3000",
+            "http://localhost:5173", // Vite dev server
             "https://gigflow-freelancer-dun.vercel.app",
         ],
         credentials: true,

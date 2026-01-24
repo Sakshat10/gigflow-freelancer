@@ -3,7 +3,7 @@ import { formatRelativeTime } from "./utils/dateUtils";
 import { fetchUser } from "./userService";
 import { fetchInvoices } from "./invoiceService";
 import { fetchMessages, sendMessage } from "./messageService";
-import { uploadFile, fetchFiles } from "./fileService";
+import { uploadFile, fetchFiles, uploadFileAsClient, fetchFilesAsClient, getFileDownloadUrl } from "./fileService";
 import { fetchConversations } from "./conversationService";
 import { fetchPricingPlans, fetchFeatures, fetchBentoCardData } from "./marketingService";
 import { recordPayment, updateInvoicePaymentStatus } from "./paymentService";
@@ -29,6 +29,9 @@ export {
   sendMessage,
   uploadFile,
   fetchFiles,
+  uploadFileAsClient,
+  fetchFilesAsClient,
+  getFileDownloadUrl,
   fetchConversations,
   fetchPricingPlans,
   fetchFeatures,
