@@ -12,7 +12,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import {
   Share2,
   FileText,
@@ -46,6 +46,13 @@ import {
   ChatMessage,
   ClientNotification,
 } from "@/services/chatService";
+import {
+  fetchFilesAsClient,
+  uploadFileAsClient,
+  addFileCommentAsClient,
+  getFileDownloadUrl,
+  WorkspaceFile,
+} from "@/services/fileService";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
@@ -63,6 +70,12 @@ interface SharedWorkspace {
     uploadedBy: string;
     createdAt: string;
     fileUrl: string;
+    comments?: Array<{
+      id: string;
+      sender: 'freelancer' | 'client';
+      text: string;
+      createdAt: string;
+    }>;
   }>;
   messages: Array<{
     id: string;
@@ -118,33 +131,66 @@ const SharedWorkspaceView: React.FC = () => {
   });
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 
-  // File comments state (local, per file)
-  const [fileComments, setFileComments] = useState<Record<string, Array<{
-    id: string;
-    sender: 'freelancer' | 'client';
-    text: string;
-    createdAt: Date;
-  }>>>({});
   const [expandedFileId, setExpandedFileId] = useState<string | null>(null);
   const [newFileComment, setNewFileComment] = useState<string>('');
 
-  // Add comment to file
-  const handleAddFileComment = (fileId: string) => {
-    if (!newFileComment.trim()) return;
+  // Add comment to file (via API)
+  const handleAddFileComment = async (fileId: string) => {
+    if (!newFileComment.trim() || !id) return;
 
-    setFileComments(prev => ({
-      ...prev,
-      [fileId]: [
-        ...(prev[fileId] || []),
-        {
-          id: Date.now().toString(),
-          sender: 'client',
-          text: newFileComment.trim(),
-          createdAt: new Date(),
-        }
-      ],
-    }));
-    setNewFileComment('');
+    try {
+      const comment = await addFileCommentAsClient(id, fileId, newFileComment.trim());
+      
+      if (comment) {
+        // Update the workspace files with the new comment
+        setWorkspace(prev => {
+          if (!prev) return prev;
+          const updatedWorkspace = {
+            ...prev,
+            files: prev.files.map(file => {
+              if (file.id === fileId) {
+                return {
+                  ...file,
+                  comments: [...(file.comments || []), comment]
+                };
+              }
+              return file;
+            })
+          };
+          return updatedWorkspace;
+        });
+        setNewFileComment('');
+        toast.success('Comment added');
+      } else {
+        toast.error('Failed to add comment');
+      }
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      toast.error('Failed to add comment');
+    }
+  };
+
+  // Handle file download
+  const handleDownloadFile = async (fileId: string, filename: string) => {
+    if (!id) return;
+
+    try {
+      const downloadUrl = await getFileDownloadUrl('', fileId, id); // Use shareToken for client
+      if (downloadUrl) {
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success('Download started');
+      } else {
+        toast.error('Failed to get download URL');
+      }
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Failed to download file');
+    }
   };
 
   // Save notifications to localStorage whenever they change
@@ -161,6 +207,7 @@ const SharedWorkspaceView: React.FC = () => {
 
       setLoading(true);
       try {
+        // Fetch workspace data
         const response = await fetch(`${API_URL}/api/client/${id}`);
 
         if (!response.ok) {
@@ -173,7 +220,17 @@ const SharedWorkspaceView: React.FC = () => {
         }
 
         const data = await response.json();
-        setWorkspace(data.workspace);
+        
+        // Fetch files with comments separately
+        const filesWithComments = await fetchFilesAsClient(id);
+        
+        // Update workspace with files that include comments
+        const workspaceWithComments = {
+          ...data.workspace,
+          files: filesWithComments
+        };
+        
+        setWorkspace(workspaceWithComments);
       } catch (err) {
         console.error("Error fetching shared workspace:", err);
         setError("Failed to connect to server");
@@ -558,14 +615,19 @@ const SharedWorkspaceView: React.FC = () => {
                                   onClick={() => setExpandedFileId(expandedFileId === file.id ? null : file.id)}
                                 >
                                   <MessageCircle className="h-4 w-4 mr-1" />
-                                  <span className="text-xs">{(fileComments[file.id] || []).length}</span>
+                                  <span className="text-xs">{file.comments?.length || 0}</span>
                                   {expandedFileId === file.id ? (
                                     <ChevronUp className="h-3 w-3 ml-1" />
                                   ) : (
                                     <ChevronDown className="h-3 w-3 ml-1" />
                                   )}
                                 </Button>
-                                <Button variant="ghost" size="icon" className="rounded-full">
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="rounded-full"
+                                  onClick={() => handleDownloadFile(file.id, file.filename)}
+                                >
                                   <Download className="h-4 w-4" />
                                 </Button>
                               </div>
@@ -575,9 +637,9 @@ const SharedWorkspaceView: React.FC = () => {
                             {expandedFileId === file.id && (
                               <div className="border-t border-gray-100 bg-gray-50/50 p-4">
                                 {/* Comment List */}
-                                {(fileComments[file.id] || []).length > 0 ? (
+                                {file.comments && file.comments.length > 0 ? (
                                   <div className="space-y-3 mb-4 max-h-48 overflow-y-auto">
-                                    {(fileComments[file.id] || []).map((comment) => (
+                                    {file.comments.map((comment) => (
                                       <div
                                         key={comment.id}
                                         className={`flex ${comment.sender === 'client' ? 'justify-end' : 'justify-start'}`}
@@ -590,7 +652,7 @@ const SharedWorkspaceView: React.FC = () => {
                                         >
                                           <p className="text-sm">{comment.text}</p>
                                           <p className={`text-xs mt-1 ${comment.sender === 'client' ? 'text-white/70' : 'text-gray-400'}`}>
-                                            {comment.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                           </p>
                                         </div>
                                       </div>
