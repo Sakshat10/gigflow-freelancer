@@ -2,6 +2,8 @@ import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { getCurrentUser } from "../lib/auth.js";
 import { v4 as uuidv4 } from "uuid";
+import { uploadSingle, handleUploadError } from "../lib/upload.js";
+import { uploadFile, getSignedUrl, deleteFile } from "../lib/supabase.js";
 
 const router = Router();
 
@@ -180,7 +182,7 @@ router.get("/:id/files", async (req, res) => {
 
         const files = await prisma.file.findMany({
             where: { workspaceId: req.params.id },
-            orderBy: { uploadedAt: "desc" },
+            orderBy: { createdAt: "desc" },
         });
 
         return res.json({ files });
@@ -190,8 +192,8 @@ router.get("/:id/files", async (req, res) => {
     }
 });
 
-// POST /api/workspaces/:id/files
-router.post("/:id/files", async (req, res) => {
+// POST /api/workspaces/:id/files - Upload file (Freelancer)
+router.post("/:id/files", uploadSingle, handleUploadError, async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
@@ -206,28 +208,43 @@ router.post("/:id/files", async (req, res) => {
             return res.status(403).json({ error: "Forbidden" });
         }
 
-        const { filename, size, mimeType, fileUrl, uploadedBy } = req.body;
+        if (!req.file) {
+            return res.status(400).json({ error: "No file uploaded" });
+        }
 
+        // Upload to Supabase Storage
+        const uploadResult = await uploadFile(
+            workspace.id,
+            req.file.originalname,
+            req.file.buffer,
+            req.file.mimetype
+        );
+
+        if (!uploadResult.success) {
+            return res.status(500).json({ error: `Upload failed: ${uploadResult.error}` });
+        }
+
+        // Save file metadata to database
         const file = await prisma.file.create({
             data: {
                 workspaceId: req.params.id,
-                filename,
-                size,
-                mimeType: mimeType || "application/octet-stream",
-                fileUrl,
-                uploadedBy: uploadedBy || "freelancer",
+                filename: req.file.originalname,
+                storagePath: uploadResult.storagePath,
+                size: req.file.size,
+                uploadedBy: "freelancer",
+                fileUrl: uploadResult.storagePath, // For backward compatibility
             },
         });
 
         return res.status(201).json({ file });
     } catch (error) {
-        console.error("Create file error:", error);
+        console.error("Upload file error:", error);
         return res.status(500).json({ error: "Internal server error" });
     }
 });
 
-// GET /api/workspaces/:id/files/:fileId
-router.get("/:id/files/:fileId", async (req, res) => {
+// GET /api/workspaces/:id/files/:fileId/download - Get signed URL for file download
+router.get("/:id/files/:fileId/download", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
         if (!currentUser) {
@@ -236,21 +253,39 @@ router.get("/:id/files/:fileId", async (req, res) => {
 
         const file = await prisma.file.findUnique({
             where: { id: req.params.fileId },
-            include: { workspace: true, comments: true },
+            include: { workspace: true },
         });
 
         if (!file || file.workspace.userId !== currentUser.userId) {
             return res.status(403).json({ error: "Forbidden" });
         }
 
-        return res.json({ file });
+        // Handle legacy files (before Supabase migration)
+        if (!file.storagePath) {
+            return res.status(410).json({ 
+                error: "File no longer available. This file was uploaded before the storage migration." 
+            });
+        }
+
+        // Generate signed URL (expires in 5 minutes)
+        const signedUrlResult = await getSignedUrl(file.storagePath, 300);
+
+        if (!signedUrlResult.success) {
+            return res.status(500).json({ error: `Download failed: ${signedUrlResult.error}` });
+        }
+
+        return res.json({ 
+            downloadUrl: signedUrlResult.signedUrl,
+            filename: file.filename,
+            expiresIn: 300 // 5 minutes
+        });
     } catch (error) {
-        console.error("Get file error:", error);
+        console.error("Get file download URL error:", error);
         return res.status(500).json({ error: "Internal server error" });
     }
 });
 
-// DELETE /api/workspaces/:id/files/:fileId
+// DELETE /api/workspaces/:id/files/:fileId - Delete file (Freelancer only)
 router.delete("/:id/files/:fileId", async (req, res) => {
     try {
         const currentUser = await getCurrentUser(req);
@@ -267,6 +302,17 @@ router.delete("/:id/files/:fileId", async (req, res) => {
             return res.status(403).json({ error: "Forbidden" });
         }
 
+        // Delete from Supabase Storage if it exists there
+        if (file.storagePath) {
+            const deleteResult = await deleteFile(file.storagePath);
+            
+            if (!deleteResult.success) {
+                console.warn(`Failed to delete file from storage: ${deleteResult.error}`);
+                // Continue with database deletion even if storage deletion fails
+            }
+        }
+
+        // Delete from database
         await prisma.file.delete({
             where: { id: req.params.fileId },
         });
