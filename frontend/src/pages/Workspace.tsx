@@ -30,12 +30,15 @@ import { Workspace as WorkspaceType } from "@/types";
 import { fetchWorkspace } from "@/services/workspace";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { hasFeatureAccess } from "@/utils/planFeatures";
 import { Input } from "@/components/ui/input";
 import CreateWorkspaceForm from "@/components/workspace/CreateWorkspaceForm";
 import InvoiceForm from "@/components/invoice/InvoiceForm";
 import KanbanBoard from "@/components/workspace/KanbanBoard";
 import TaskForm from "@/components/task/TaskForm";
+import DocumentGenerator, { SavedDocument } from "@/components/documents/DocumentGenerator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { fetchInvoices, deleteInvoice } from "@/services/invoiceService";
 import { fetchTasks, updateTask as updateTaskService, deleteTask as deleteTaskService } from "@/services/taskService";
@@ -73,6 +76,7 @@ const Workspace: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const hasDocsAccess = hasFeatureAccess(user?.plan, "documents");
   const [workspace, setWorkspace] = useState<WorkspaceType | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [tasks, setTasks] = useState<Thing[]>([]);
@@ -80,6 +84,10 @@ const Workspace: React.FC = () => {
   const [activeTab, setActiveTab] = useState("files");
   const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false);
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
+  const [isDocumentDialogOpen, setIsDocumentDialogOpen] = useState(false);
+  const [savedDocuments, setSavedDocuments] = useState<SavedDocument[]>([]);
+  const [previewDocument, setPreviewDocument] = useState<SavedDocument | null>(null);
+  const [documentToDelete, setDocumentToDelete] = useState<string | null>(null);
   const [initialTaskStatus, setInitialTaskStatus] = useState<Thing['status']>("todo");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -178,6 +186,44 @@ const Workspace: React.FC = () => {
     }
   };
 
+  // Handle document save
+  const handleDocumentSaved = (document: SavedDocument) => {
+    if (!id) return;
+    
+    const updatedDocs = [...savedDocuments, document];
+    setSavedDocuments(updatedDocs);
+    localStorage.setItem(`documents_${id}`, JSON.stringify(updatedDocs));
+  };
+
+  // Handle document delete
+  const handleDeleteDocument = (docId: string) => {
+    setDocumentToDelete(docId);
+  };
+
+  const confirmDeleteDocument = () => {
+    if (!id || !documentToDelete) return;
+    
+    const updatedDocs = savedDocuments.filter(doc => doc.id !== documentToDelete);
+    setSavedDocuments(updatedDocs);
+    localStorage.setItem(`documents_${id}`, JSON.stringify(updatedDocs));
+    setDocumentToDelete(null);
+    setPreviewDocument(null);
+    toast.success('Document deleted');
+  };
+
+  const handleDownloadDocument = (doc: SavedDocument) => {
+    const blob = new Blob([doc.content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${doc.title}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success("Document downloaded");
+  };
+
   // Handle file download
   const handleDownloadFile = async (fileId: string, filename: string) => {
     if (!id) return;
@@ -269,6 +315,12 @@ const Workspace: React.FC = () => {
         setTasks(taskData);
         setMessages(msgData);
         setUploadedFiles(filesData);
+        
+        // Load saved documents from localStorage
+        const storedDocs = localStorage.getItem(`documents_${id}`);
+        if (storedDocs) {
+          setSavedDocuments(JSON.parse(storedDocs));
+        }
       } catch (error) {
         console.error("Error loading workspace data:", error);
         toast.error("Failed to load workspace data");
@@ -547,17 +599,21 @@ const Workspace: React.FC = () => {
                     <TabsTrigger
                       id="tab-documents"
                       value="documents"
-                      className="flex gap-2 opacity-50 cursor-not-allowed"
-                      disabled
+                      className={`flex gap-2 ${!hasDocsAccess ? "opacity-50 cursor-not-allowed" : ""}`}
+                      disabled={!hasDocsAccess}
                     >
                       <FileSpreadsheet className="h-4 w-4" />
                       <span className="hidden sm:inline">Docs</span>
-                      <Lock className="h-3 w-3 ml-1" />
+                      {!hasDocsAccess && <Lock className="h-3 w-3 ml-1" />}
                     </TabsTrigger>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="bg-gray-900 text-white">
-                  <p>🚀 Feature coming soon!</p>
+                  {hasDocsAccess ? (
+                    <p>📝 Generate documents</p>
+                  ) : (
+                    <p>🔒 Pro Plus feature</p>
+                  )}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -944,37 +1000,178 @@ const Workspace: React.FC = () => {
             </DialogContent>
           </Dialog>
 
-          {/* Documents Tab - Locked */}
+          {/* Document Generation Dialog */}
+          <DocumentGenerator
+            isOpen={isDocumentDialogOpen}
+            onClose={() => setIsDocumentDialogOpen(false)}
+            workspaceName={workspace?.name}
+            onDocumentSaved={handleDocumentSaved}
+          />
+
+          {/* Document Preview Dialog */}
+          <Dialog open={!!previewDocument} onOpenChange={() => setPreviewDocument(null)}>
+            <DialogContent className="max-w-4xl max-h-[90vh]">
+              <DialogHeader>
+                <div className="flex items-center justify-between">
+                  <DialogTitle>{previewDocument?.title}</DialogTitle>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (previewDocument) {
+                          navigator.clipboard.writeText(previewDocument.content);
+                          toast.success("Copied to clipboard");
+                        }
+                      }}
+                    >
+                      <File className="h-4 w-4 mr-2" />
+                      Copy
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (previewDocument) {
+                          handleDownloadDocument(previewDocument);
+                        }
+                      }}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Download
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (previewDocument) {
+                          handleDeleteDocument(previewDocument.id);
+                        }
+                      }}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              </DialogHeader>
+              <div className="bg-white border rounded-lg p-8 max-h-[70vh] overflow-y-auto">
+                <div className="whitespace-pre-wrap font-mono text-sm">
+                  {previewDocument?.content}
+                </div>
+              </div>
+              <div className="text-xs text-muted-foreground bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <p>
+                  This document is AI-generated and provided for general reference only. 
+                  Please consult a qualified legal professional before signing or sharing.
+                </p>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Delete Confirmation Dialog */}
+          <AlertDialog open={!!documentToDelete} onOpenChange={() => setDocumentToDelete(null)}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Document?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete this document? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={confirmDeleteDocument} className="bg-destructive hover:bg-destructive/90">
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          {/* Documents Tab */}
           <TabsContent value="documents">
             <FadeIn>
               <Card className="relative overflow-hidden">
-                <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center">
-                  <div className="bg-primary/10 rounded-full p-4 mb-4">
-                    <Lock className="h-8 w-8 text-primary" />
+                {!hasDocsAccess && (
+                  <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center">
+                    <div className="bg-primary/10 rounded-full p-4 mb-4">
+                      <Lock className="h-8 w-8 text-primary" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-800 mb-2">Pro Plus Feature</h3>
+                    <p className="text-gray-500 text-center max-w-md px-4">
+                      Upgrade to Pro Plus to unlock AI-powered document generation. Create contracts, proposals, and more with just a few clicks!
+                    </p>
+                    <Button 
+                      className="mt-4"
+                      onClick={() => navigate("/settings?tab=pricing")}
+                    >
+                      Upgrade to Pro Plus
+                    </Button>
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-800 mb-2">Feature Coming Soon</h3>
-                  <p className="text-gray-500 text-center max-w-md px-4">
-                    We're working on AI-powered document generation. Create contracts, proposals, and more with just a few clicks!
-                  </p>
-                  <Badge variant="outline" className="mt-4 bg-primary/10 text-primary border-primary/20">
-                    🚀 Coming Soon
-                  </Badge>
-                </div>
+                )}
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle>Documents</CardTitle>
-                  <Button className="rounded-full" disabled>
+                  <Button 
+                    className="rounded-full" 
+                    disabled={!hasDocsAccess}
+                    onClick={() => setIsDocumentDialogOpen(true)}
+                  >
                     <Plus className="h-4 w-4 mr-2" />
-                    Generate Document
+                    Generate Draft
                   </Button>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-center py-12 text-gray-500">
-                    <FileSpreadsheet className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No documents yet</p>
-                    <p className="text-sm mt-1">
-                      Generate contracts, proposals, and more
-                    </p>
-                  </div>
+                  {savedDocuments.length === 0 ? (
+                    <div className="text-center py-12 text-gray-500">
+                      <FileSpreadsheet className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No documents yet</p>
+                      <p className="text-sm mt-1">
+                        Generate contracts, proposals, and more
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {savedDocuments.map((doc) => (
+                        <Card key={doc.id} className="p-4 hover:shadow-md transition-shadow">
+                          <div className="flex items-start justify-between">
+                            <div 
+                              className="flex items-start gap-3 flex-1 cursor-pointer"
+                              onClick={() => setPreviewDocument(doc)}
+                            >
+                              <div className="bg-primary/10 p-2 rounded-lg">
+                                <FileText className="h-5 w-5 text-primary" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold text-sm truncate hover:text-primary transition-colors">
+                                  {doc.title}
+                                </h4>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {doc.type.toUpperCase()} • {new Date(doc.createdAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDownloadDocument(doc)}
+                                title="Download"
+                              >
+                                <Upload className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteDocument(doc.id)}
+                                title="Delete"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </FadeIn>
