@@ -12,8 +12,8 @@ interface PlanFeatures {
 }
 
 const planFeatures: PlanFeatures = {
-  "free": ["chat", "files", "things", "emailBlaster"],
-  "pro": ["chat", "files", "things", "invoices", "documents", "emailBlaster"],
+  "free": ["chat", "files", "things"],
+  "pro": ["chat", "files", "things", "invoices"],
   "pro_plus": ["chat", "files", "things", "invoices", "documents", "emailBlaster", "clientManagement"]
 };
 
@@ -23,8 +23,8 @@ export const featureRequiredPlan: Record<PlanFeature, string> = {
   "files": "free",
   "things": "free",
   "invoices": "pro",
-  "documents": "pro",
-  "emailBlaster": "free", // Changed from pro_plus for testing
+  "documents": "pro_plus",
+  "emailBlaster": "pro_plus",
   "clientManagement": "pro_plus"
 };
 
