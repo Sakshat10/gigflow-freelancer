@@ -209,13 +209,10 @@ const Dashboard: React.FC = () => {
                   id="email-clients-btn"
                   className="rounded-full px-4 hover-translate flex-1 sm:flex-none"
                   variant="outline"
-                  onClick={() => {
-                    toast("Email Clients feature coming soon!", { icon: "🔒" });
-                  }}
+                  onClick={() => navigate("/client-emails")}
                 >
                   <Mail className="h-4 w-4 mr-2" />
-                  <span className="whitespace-nowrap">Email Clients</span>
-                  <Lock className="h-3 w-3 ml-2 text-gray-400" />
+                  <span className="whitespace-nowrap">Client Updates</span>
                 </Button>
 
                 <Button
