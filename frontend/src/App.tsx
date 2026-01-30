@@ -33,6 +33,7 @@ import ReturnPolicy from "./pages/ReturnPolicy";
 import RefundPolicy from "./pages/RefundPolicy";
 import NotFound from "./pages/NotFound";
 import ClientEmails from "./pages/ClientEmails";
+import ClientUpdates from "./pages/ClientUpdates";
 import { hasFeatureAccess } from "./utils/planFeatures";
 
 const queryClient = new QueryClient({
@@ -142,12 +143,11 @@ const App: React.FC = () => {
                 <Route path="/share/:id" element={<SharedWorkspaceView />} />
                 <Route 
                   path="/client-emails" 
-                  element={
-                    <FeatureProtectedRoute 
-                      element={<ClientEmails />} 
-                      feature="emailBlaster" 
-                    />
-                  } 
+                  element={<ClientUpdates />}
+                />
+                <Route 
+                  path="/client-updates" 
+                  element={<ClientUpdates />}
                 />
                 <Route path="/settings/*" element={<Settings />}>
                   <Route index element={<Navigate to="/settings/account" replace />} />
