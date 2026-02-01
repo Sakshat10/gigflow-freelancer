@@ -855,9 +855,9 @@ const SharedWorkspaceView: React.FC = () => {
               <TabsTrigger value="invoices" className="flex gap-2">
                 <Receipt className="h-4 w-4" />
                 <span className="hidden sm:inline">Invoices</span>
-                {workspace.invoices.length > 0 && (
+                {workspace.invoices.filter(inv => inv.status?.toLowerCase() !== 'draft').length > 0 && (
                   <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
-                    {workspace.invoices.length}
+                    {workspace.invoices.filter(inv => inv.status?.toLowerCase() !== 'draft').length}
                   </Badge>
                 )}
               </TabsTrigger>
