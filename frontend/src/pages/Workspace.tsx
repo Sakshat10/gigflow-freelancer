@@ -30,7 +30,7 @@ import { Workspace as WorkspaceType } from "@/types";
 import { fetchWorkspace } from "@/services/workspace";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { hasFeatureAccess } from "@/utils/planFeatures";
+import { hasFeatureAccess, canSendInvoices } from "@/utils/planFeatures";
 import { Input } from "@/components/ui/input";
 import CreateWorkspaceForm from "@/components/workspace/CreateWorkspaceForm";
 import InvoiceForm from "@/components/invoice/InvoiceForm";
@@ -51,6 +51,30 @@ import {
   offNewMessage,
   sendMessageSocket,
   ChatMessage,
+  emitFileUploaded,
+  emitFileDeleted,
+  emitFileCommentAdded,
+  onFileUploaded,
+  onFileDeleted,
+  onFileCommentAdded,
+  offFileUploaded,
+  offFileDeleted,
+  offFileCommentAdded,
+  emitInvoiceCreated,
+  emitInvoiceDeleted,
+  onInvoiceCreated,
+  onInvoiceDeleted,
+  offInvoiceCreated,
+  offInvoiceDeleted,
+  emitTaskCreated,
+  emitTaskStatusUpdated,
+  emitTaskDeleted,
+  onTaskCreated,
+  onTaskStatusUpdated,
+  onTaskDeleted,
+  offTaskCreated,
+  offTaskStatusUpdated,
+  offTaskDeleted,
 } from "@/services/chatService";
 import {
   fetchFiles,
@@ -67,7 +91,7 @@ import { useIntroTour, TourStep } from "@/hooks/use-intro-tour";
 import 'intro.js/introjs.css';
 import { Invoice, Thing } from "@/types";
 import { Badge } from "@/components/ui/badge";
-import { MoreVertical, Download, ExternalLink, Trash2, Clock } from "lucide-react";
+import { MoreVertical, Download, ExternalLink, Trash2, Clock, Eye } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
@@ -77,6 +101,7 @@ const Workspace: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const hasDocsAccess = hasFeatureAccess(user?.plan, "documents");
+  const canSendInvoice = canSendInvoices(user?.plan);
   const [workspace, setWorkspace] = useState<WorkspaceType | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [tasks, setTasks] = useState<Thing[]>([]);
@@ -103,6 +128,35 @@ const Workspace: React.FC = () => {
   const [expandedFileId, setExpandedFileId] = useState<string | null>(null);
   const [newFileComment, setNewFileComment] = useState<string>('');
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [previewFile, setPreviewFile] = useState<{ id: string; filename: string; url: string } | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [fileToDelete, setFileToDelete] = useState<{ id: string; filename: string } | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  // Handle file preview
+  const handlePreviewFile = async (fileId: string, filename: string) => {
+    if (!id) return;
+
+    try {
+      const downloadUrl = await getFileDownloadUrl(id, fileId);
+      if (downloadUrl) {
+        setPreviewFile({ id: fileId, filename, url: downloadUrl });
+        setIsPreviewOpen(true);
+      } else {
+        toast.error('Failed to load file preview');
+      }
+    } catch (error) {
+      console.error('Preview error:', error);
+      toast.error('Failed to load file preview');
+    }
+  };
+
+  // Check if file is previewable
+  const isPreviewable = (filename: string): boolean => {
+    const extension = filename.toLowerCase().split('.').pop() || '';
+    const previewableTypes = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'pdf', 'txt', 'md'];
+    return previewableTypes.includes(extension);
+  };
 
   // Handle file selection (upload to backend)
   const handleFileSelect = async (files: FileList | null) => {
@@ -113,6 +167,7 @@ const Workspace: React.FC = () => {
 
     try {
       for (const file of Array.from(files)) {
+        console.log('Uploading file:', file.name, 'Type:', file.type, 'Size:', file.size);
         const uploadedFile = await uploadFile(id, file);
         
         if (uploadedFile) {
@@ -123,12 +178,20 @@ const Workspace: React.FC = () => {
           };
           
           setUploadedFiles(prev => [fileWithDefaults, ...prev]);
+          toast.success(`${file.name} uploaded successfully`);
+          
+          // Emit socket event for real-time sync
+          emitFileUploaded({
+            workspaceId: id,
+            file: fileWithDefaults
+          });
+        } else {
+          toast.error(`Failed to upload ${file.name}. Check console for details.`);
         }
       }
-      toast.success(`${files.length} file(s) uploaded`);
     } catch (error) {
       console.error('Upload error:', error);
-      toast.error('Failed to upload file(s)');
+      toast.error('Failed to upload file(s). Check console for details.');
     } finally {
       setUploadingFile(false);
     }
@@ -151,6 +214,13 @@ const Workspace: React.FC = () => {
         return file;
       }));
       setNewFileComment('');
+      
+      // Emit socket event for real-time sync
+      emitFileCommentAdded({
+        workspaceId: id,
+        fileId,
+        comment
+      });
     } else {
       toast.error('Failed to add comment');
     }
@@ -173,17 +243,32 @@ const Workspace: React.FC = () => {
     handleFileSelect(e.dataTransfer.files);
   };
 
-  // Delete file (via backend)
-  const handleDeleteFile = async (fileId: string) => {
-    if (!id) return;
+  // Open delete confirmation dialog
+  const openDeleteDialog = (fileId: string, filename: string) => {
+    setFileToDelete({ id: fileId, filename });
+    setIsDeleteDialogOpen(true);
+  };
 
-    const success = await deleteFile(id, fileId);
+  // Delete file (via backend)
+  const handleDeleteFile = async () => {
+    if (!id || !fileToDelete) return;
+
+    const success = await deleteFile(id, fileToDelete.id);
     if (success) {
-      setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
+      setUploadedFiles(prev => prev.filter(f => f.id !== fileToDelete.id));
       toast.success('File deleted');
+      
+      // Emit socket event for real-time sync
+      emitFileDeleted({
+        workspaceId: id,
+        fileId: fileToDelete.id
+      });
     } else {
       toast.error('Failed to delete file');
     }
+    
+    setIsDeleteDialogOpen(false);
+    setFileToDelete(null);
   };
 
   // Handle document save
@@ -332,7 +417,7 @@ const Workspace: React.FC = () => {
     loadData();
   }, [id, isCreating]);
 
-  // Socket connection for real-time chat
+  // Socket connection for real-time chat and file/invoice/task sync
   useEffect(() => {
     if (!id || isCreating) return;
 
@@ -352,10 +437,98 @@ const Workspace: React.FC = () => {
       }, 100);
     };
 
+    // Listen for file uploaded
+    const handleFileUploaded = (data: any) => {
+      console.log('[Workspace] File uploaded event received:', data);
+      setUploadedFiles(prev => {
+        // Avoid duplicates
+        if (prev.some(f => f.id === data.file.id)) return prev;
+        return [data.file, ...prev];
+      });
+    };
+
+    // Listen for file deleted
+    const handleFileDeleted = (data: any) => {
+      console.log('[Workspace] File deleted event received:', data);
+      setUploadedFiles(prev => prev.filter(f => f.id !== data.fileId));
+    };
+
+    // Listen for file comment added
+    const handleFileCommentAdded = (data: any) => {
+      console.log('[Workspace] File comment added event received:', data);
+      setUploadedFiles(prev => prev.map(file => {
+        if (file.id === data.fileId) {
+          // Avoid duplicate comments
+          if (file.comments?.some(c => c.id === data.comment.id)) return file;
+          return {
+            ...file,
+            comments: [...(file.comments || []), data.comment]
+          };
+        }
+        return file;
+      }));
+    };
+
+    // Listen for invoice created
+    const handleInvoiceCreated = (data: any) => {
+      console.log('[Workspace] Invoice created event received:', data);
+      setInvoices(prev => {
+        // Avoid duplicates
+        if (prev.some(inv => inv.id === data.invoice.id)) return prev;
+        return [data.invoice, ...prev];
+      });
+    };
+
+    // Listen for invoice deleted
+    const handleInvoiceDeleted = (data: any) => {
+      console.log('[Workspace] Invoice deleted event received:', data);
+      setInvoices(prev => prev.filter(inv => inv.id !== data.invoiceId));
+    };
+
+    // Listen for task created
+    const handleTaskCreated = (data: any) => {
+      console.log('[Workspace] Task created event received:', data);
+      setTasks(prev => {
+        // Avoid duplicates
+        if (prev.some(t => t.id === data.task.id)) return prev;
+        return [data.task, ...prev];
+      });
+    };
+
+    // Listen for task status updated
+    const handleTaskStatusUpdated = (data: any) => {
+      console.log('[Workspace] Task status updated event received:', data);
+      setTasks(prev => prev.map(t => 
+        t.id === data.task.id ? data.task : t
+      ));
+    };
+
+    // Listen for task deleted
+    const handleTaskDeleted = (data: any) => {
+      console.log('[Workspace] Task deleted event received:', data);
+      setTasks(prev => prev.filter(t => t.id !== data.taskId));
+    };
+
     onNewMessage(handleNewMessage);
+    onFileUploaded(handleFileUploaded);
+    onFileDeleted(handleFileDeleted);
+    onFileCommentAdded(handleFileCommentAdded);
+    onInvoiceCreated(handleInvoiceCreated);
+    onInvoiceDeleted(handleInvoiceDeleted);
+    onTaskCreated(handleTaskCreated);
+    onTaskStatusUpdated(handleTaskStatusUpdated);
+    onTaskDeleted(handleTaskDeleted);
 
     return () => {
       offNewMessage(handleNewMessage);
+      offFileUploaded(handleFileUploaded);
+      offFileDeleted(handleFileDeleted);
+      offFileCommentAdded(handleFileCommentAdded);
+      offInvoiceCreated(handleInvoiceCreated);
+      offInvoiceDeleted(handleInvoiceDeleted);
+      offTaskCreated(handleTaskCreated);
+      offTaskStatusUpdated(handleTaskStatusUpdated);
+      offTaskDeleted(handleTaskDeleted);
       leaveWorkspaceSocket(id);
     };
   }, [id, isCreating]);
@@ -592,31 +765,31 @@ const Workspace: React.FC = () => {
               <Receipt className="h-4 w-4" />
               <span className="hidden sm:inline">Invoices</span>
             </TabsTrigger>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="relative">
-                    <TabsTrigger
-                      id="tab-documents"
-                      value="documents"
-                      className={`flex gap-2 ${!hasDocsAccess ? "opacity-50 cursor-not-allowed" : ""}`}
-                      disabled={!hasDocsAccess}
-                    >
+            <TabsTrigger
+              id="tab-documents"
+              value="documents"
+              className={`flex gap-2 ${!hasDocsAccess ? "opacity-50 cursor-not-allowed" : ""}`}
+              disabled={!hasDocsAccess}
+            >
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-2">
                       <FileSpreadsheet className="h-4 w-4" />
                       <span className="hidden sm:inline">Docs</span>
                       {!hasDocsAccess && <Lock className="h-3 w-3 ml-1" />}
-                    </TabsTrigger>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="bg-gray-900 text-white">
-                  {hasDocsAccess ? (
-                    <p>📝 Generate documents</p>
-                  ) : (
-                    <p>🔒 Pro Plus feature</p>
-                  )}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="bg-gray-900 text-white">
+                    {hasDocsAccess ? (
+                      <p>📝 Generate documents</p>
+                    ) : (
+                      <p>🔒 Pro Plus feature</p>
+                    )}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </TabsTrigger>
             <TabsTrigger id="tab-tasks" value="things" className="flex gap-2">
               <CheckSquare className="h-4 w-4" />
               <span className="hidden sm:inline">Tasks</span>
@@ -688,22 +861,38 @@ const Workspace: React.FC = () => {
                                   <ChevronDown className="h-3 w-3 ml-1" />
                                 )}
                               </Button>
+                              {isPreviewable(file.filename) && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="rounded-full"
+                                  onClick={() => handlePreviewFile(file.id, file.filename)}
+                                  title="Preview file"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              )}
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="rounded-full"
                                 onClick={() => handleDownloadFile(file.id, file.filename)}
+                                title="Download file"
                               >
                                 <Download className="h-4 w-4" />
                               </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-600"
-                                onClick={() => handleDeleteFile(file.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              {/* Only show delete button if uploaded by freelancer */}
+                              {file.uploadedBy === 'freelancer' && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="rounded-full text-red-500 hover:text-red-600"
+                                  onClick={() => openDeleteDialog(file.id, file.filename)}
+                                  title="Delete file"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
                             </div>
                           </div>
 
@@ -815,6 +1004,7 @@ const Workspace: React.FC = () => {
                   ref={fileInputRef}
                   type="file"
                   multiple
+                  accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar,.7z"
                   className="hidden"
                   onChange={(e) => handleFileSelect(e.target.files)}
                 />
@@ -898,7 +1088,11 @@ const Workspace: React.FC = () => {
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
                     <CardTitle>Invoices</CardTitle>
-                    <p className="text-sm text-muted-foreground mt-1">Manage billing and payments for this workspace.</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {canSendInvoice 
+                        ? "Manage billing and payments for this workspace."
+                        : "Create draft invoices. Upgrade to Pro to send them to clients."}
+                    </p>
                   </div>
                   <Button className="rounded-full" onClick={() => setIsInvoiceDialogOpen(true)}>
                     <Plus className="h-4 w-4 mr-2" />
@@ -916,16 +1110,36 @@ const Workspace: React.FC = () => {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {invoices.map((invoice) => (
+                      {invoices.map((invoice) => {
+                        const isDraft = invoice.status?.toLowerCase() === 'draft';
+                        const isPaid = invoice.status === 'Paid';
+                        
+                        return (
                         <div key={invoice.id} className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-primary/20 hover:bg-primary/5 transition-all group">
                           <div className="flex items-center gap-4">
                             <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                               <Receipt className="h-6 w-6" />
                             </div>
                             <div>
-                              <p className="font-semibold">{invoice.clientName}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="font-semibold">{invoice.clientName}</p>
+                                {isDraft && !canSendInvoice && (
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Lock className="h-3 w-3 text-gray-400" />
+                                      </TooltipTrigger>
+                                      <TooltipContent side="top" className="bg-gray-900 text-white">
+                                        <p>Upgrade to Pro to send invoices</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                )}
+                              </div>
                               <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                                <span>Inv INV-{invoice.id.slice(0, 8).toUpperCase()}</span>
+                                <span>
+                                  {invoice.invoiceNumber || `INV-${invoice.id.slice(0, 8).toUpperCase()}`}
+                                </span>
                                 <span>•</span>
                                 <span>Due {new Date(invoice.dueDate).toLocaleDateString()}</span>
                               </div>
@@ -935,12 +1149,17 @@ const Workspace: React.FC = () => {
                           <div className="flex items-center gap-6">
                             <div className="text-right">
                               <p className="font-bold text-lg">${((invoice.amount || 0) * (1 + (invoice.taxPercentage || 0) / 100)).toFixed(2)}</p>
-                              <Badge variant={invoice.status === 'Paid' ? 'outline' : 'secondary'} className={
-                                invoice.status === 'Paid'
-                                  ? 'bg-green-50 text-green-700 border-green-200'
-                                  : 'bg-amber-50 text-amber-700 border-amber-200'
-                              }>
-                                {invoice.status}
+                              <Badge 
+                                variant={isPaid ? 'outline' : 'secondary'} 
+                                className={
+                                  isPaid
+                                    ? 'bg-green-50 text-green-700 border-green-200'
+                                    : isDraft
+                                    ? 'bg-gray-50 text-gray-700 border-gray-200'
+                                    : 'bg-amber-50 text-amber-700 border-amber-200'
+                                }
+                              >
+                                {isDraft ? 'Draft' : invoice.status}
                               </Badge>
                             </div>
 
@@ -951,6 +1170,18 @@ const Workspace: React.FC = () => {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="rounded-xl border-gray-100 shadow-xl">
+                                {isDraft && !canSendInvoice ? (
+                                  <DropdownMenuItem
+                                    className="flex items-center gap-2 cursor-pointer text-primary"
+                                    onClick={() => {
+                                      navigate("/settings?tab=pricing");
+                                      toast.info("Upgrade to Pro to send invoices to clients");
+                                    }}
+                                  >
+                                    <Lock className="h-4 w-4" />
+                                    Upgrade to Send
+                                  </DropdownMenuItem>
+                                ) : null}
                                 <DropdownMenuItem
                                   className="flex items-center gap-2 cursor-pointer"
                                   onClick={() => downloadInvoicePDF(invoice)}
@@ -965,6 +1196,14 @@ const Workspace: React.FC = () => {
                                     if (success) {
                                       setInvoices(prev => prev.filter(inv => inv.id !== invoice.id));
                                       toast.success("Invoice deleted");
+                                      
+                                      // Emit socket event for real-time sync
+                                      if (id) {
+                                        emitInvoiceDeleted({
+                                          workspaceId: id,
+                                          invoiceId: invoice.id
+                                        });
+                                      }
                                     } else {
                                       toast.error("Failed to delete invoice");
                                     }
@@ -977,7 +1216,8 @@ const Workspace: React.FC = () => {
                             </DropdownMenu>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </CardContent>
@@ -993,7 +1233,23 @@ const Workspace: React.FC = () => {
                 onInvoiceCreated={(newInvoice) => {
                   setInvoices(prev => [newInvoice, ...prev]);
                   setIsInvoiceDialogOpen(false);
-                  toast.success("Invoice created successfully!");
+                  
+                  // Show different messages based on invoice status
+                  if (newInvoice.status?.toLowerCase() === 'draft' && !canSendInvoice) {
+                    toast.success("Invoice draft created! Upgrade to Pro to send it to your client.", {
+                      duration: 5000,
+                    });
+                  } else {
+                    toast.success("Invoice created successfully!");
+                  }
+                  
+                  // Emit socket event for real-time sync
+                  if (id) {
+                    emitInvoiceCreated({
+                      workspaceId: id,
+                      invoice: newInvoice
+                    });
+                  }
                 }}
                 onCancel={() => setIsInvoiceDialogOpen(false)}
               />
@@ -1207,6 +1463,14 @@ const Workspace: React.FC = () => {
                       const updated = await updateTaskService(taskId, { status, workspaceId: id });
                       if (updated) {
                         setTasks(prev => prev.map(t => t.id === taskId ? updated : t));
+                        
+                        // Emit socket event for real-time sync
+                        if (id) {
+                          emitTaskStatusUpdated({
+                            workspaceId: id,
+                            task: updated
+                          });
+                        }
                       }
                     }}
                     onAddTask={(status) => {
@@ -1217,6 +1481,14 @@ const Workspace: React.FC = () => {
                       if (await deleteTaskService(taskId, id)) {
                         setTasks(prev => prev.filter(t => t.id !== taskId));
                         toast.success("Task deleted");
+                        
+                        // Emit socket event for real-time sync
+                        if (id) {
+                          emitTaskDeleted({
+                            workspaceId: id,
+                            taskId
+                          });
+                        }
                       }
                     }}
                   />
@@ -1235,9 +1507,95 @@ const Workspace: React.FC = () => {
                   setTasks(prev => [newTask, ...prev]);
                   setIsTaskDialogOpen(false);
                   toast.success("Task added to board!");
+                  
+                  // Emit socket event for real-time sync
+                  if (id) {
+                    emitTaskCreated({
+                      workspaceId: id,
+                      task: newTask
+                    });
+                  }
                 }}
                 onCancel={() => setIsTaskDialogOpen(false)}
               />
+            </DialogContent>
+          </Dialog>
+
+          {/* File Preview Dialog */}
+          <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+            <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+              <DialogHeader className="p-6 pb-4">
+                <DialogTitle className="flex items-center gap-2">
+                  <Eye className="h-5 w-5" />
+                  {previewFile?.filename}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="px-6 pb-6 overflow-auto max-h-[calc(90vh-100px)]">
+                {previewFile && (
+                  <>
+                    {/* Image Preview */}
+                    {/\.(jpg|jpeg|png|gif|webp|svg)$/i.test(previewFile.filename) && (
+                      <img
+                        src={previewFile.url}
+                        alt={previewFile.filename}
+                        className="w-full h-auto rounded-lg"
+                      />
+                    )}
+                    
+                    {/* PDF Preview */}
+                    {/\.pdf$/i.test(previewFile.filename) && (
+                      <iframe
+                        src={previewFile.url}
+                        className="w-full h-[70vh] rounded-lg border"
+                        title={previewFile.filename}
+                      />
+                    )}
+                    
+                    {/* Text Preview */}
+                    {/\.(txt|md)$/i.test(previewFile.filename) && (
+                      <iframe
+                        src={previewFile.url}
+                        className="w-full h-[70vh] rounded-lg border bg-white p-4"
+                        title={previewFile.filename}
+                      />
+                    )}
+                  </>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Delete Confirmation Dialog */}
+          <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Delete File</DialogTitle>
+              </DialogHeader>
+              <div className="py-4">
+                <p className="text-gray-600">
+                  Are you sure you want to delete <span className="font-semibold">"{fileToDelete?.filename}"</span>?
+                </p>
+                <p className="text-sm text-gray-500 mt-2">
+                  This action cannot be undone.
+                </p>
+              </div>
+              <div className="flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsDeleteDialogOpen(false);
+                    setFileToDelete(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteFile}
+                >
+                  Delete
+                </Button>
+              </div>
             </DialogContent>
           </Dialog>
         </Tabs>
