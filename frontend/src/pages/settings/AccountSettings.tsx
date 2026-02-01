@@ -246,13 +246,12 @@ const AccountSettings: React.FC = () => {
         <Button
           onClick={handleUpdatePaypal}
           disabled={isUpdatingPaypal}
-          variant="outline"
           className="min-w-[140px]"
         >
           {isUpdatingPaypal ? (
             <>
               <span className="mr-2">Saving...</span>
-              <div className="w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             </>
           ) : (
             "Save PayPal Username"
