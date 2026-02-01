@@ -61,20 +61,68 @@ export async function markAllNotificationsAsRead() {
 // Join user's Socket.io room for real-time notifications
 export function joinUserRoom(userId: string) {
     const socket = initializeSocket();
-    socket.emit('join-user-room', userId);
-    console.log('[NotificationService] Joined user room:', userId);
+    
+    const doJoin = () => {
+        socket.emit('join-user-room', userId);
+        console.log('[NotificationService] Joined user room:', userId);
+        
+        // Debug: Log socket info
+        setTimeout(() => {
+            console.log('[NotificationService] Socket ID:', socket.id);
+            console.log('[NotificationService] Socket connected:', socket.connected);
+        }, 500);
+    };
+    
+    // If socket is already connected, join immediately
+    if (socket.connected) {
+        doJoin();
+    } else {
+        // Otherwise, wait for connection
+        console.log('[NotificationService] Waiting for socket to connect...');
+        socket.once('connect', () => {
+            console.log('[NotificationService] Socket connected, now joining user room');
+            doJoin();
+        });
+    }
 }
+
+// Track if listener is already set up
+let notificationListenerSetup = false;
 
 // Listen for real-time notification events
 export function onNotification(callback: (notification: any) => void) {
     const socket = initializeSocket();
-    socket.on('notification', callback);
+    
+    const setupListener = () => {
+        if (notificationListenerSetup) {
+            console.log('[NotificationService] Notification listener already set up, skipping');
+            return;
+        }
+        
+        console.log('[NotificationService] Setting up notification listener on socket:', socket.id);
+        socket.on('notification', callback);
+        notificationListenerSetup = true;
+    };
+    
+    // If socket is already connected, set up listener immediately
+    if (socket.connected) {
+        setupListener();
+    } else {
+        // Otherwise, wait for connection
+        console.log('[NotificationService] Waiting for socket to connect before setting up listener...');
+        socket.once('connect', () => {
+            console.log('[NotificationService] Socket connected, now setting up notification listener');
+            setupListener();
+        });
+    }
 }
 
 // Remove notification listener
 export function offNotification(callback: (notification: any) => void) {
     const socket = initializeSocket();
     socket.off('notification', callback);
+    notificationListenerSetup = false;
+    console.log('[NotificationService] Removed notification listener');
 }
 
 // Delete all user notifications
