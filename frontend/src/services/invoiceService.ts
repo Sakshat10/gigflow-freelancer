@@ -109,6 +109,14 @@ export const createInvoice = async (data: Partial<Invoice> & { currency?: string
 
         if (!response.ok) {
             const errorData = await response.json();
+            
+            // Check for invoice limit error
+            if (errorData.code === 'INVOICE_LIMIT_REACHED') {
+                const error: any = new Error(errorData.error || 'Invoice limit reached');
+                error.code = 'INVOICE_LIMIT_REACHED';
+                throw error;
+            }
+            
             throw new Error(errorData.error || 'Failed to create invoice');
         }
 
