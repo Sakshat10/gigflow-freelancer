@@ -132,6 +132,8 @@ const Workspace: React.FC = () => {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [fileToDelete, setFileToDelete] = useState<{ id: string; filename: string } | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<{ id: string; invoiceNumber: string } | null>(null);
+  const [isInvoiceDeleteDialogOpen, setIsInvoiceDeleteDialogOpen] = useState(false);
 
   // Handle file preview
   const handlePreviewFile = async (fileId: string, filename: string) => {
@@ -269,6 +271,34 @@ const Workspace: React.FC = () => {
     
     setIsDeleteDialogOpen(false);
     setFileToDelete(null);
+  };
+
+  // Open invoice delete confirmation dialog
+  const openInvoiceDeleteDialog = (invoiceId: string, invoiceNumber: string) => {
+    setInvoiceToDelete({ id: invoiceId, invoiceNumber });
+    setIsInvoiceDeleteDialogOpen(true);
+  };
+
+  // Delete invoice (via backend)
+  const handleDeleteInvoice = async () => {
+    if (!id || !invoiceToDelete) return;
+
+    const success = await deleteInvoice(invoiceToDelete.id, id);
+    if (success) {
+      setInvoices(prev => prev.filter(inv => inv.id !== invoiceToDelete.id));
+      toast.success("Invoice deleted");
+      
+      // Emit socket event for real-time sync
+      emitInvoiceDeleted({
+        workspaceId: id,
+        invoiceId: invoiceToDelete.id
+      });
+    } else {
+      toast.error("Failed to delete invoice");
+    }
+    
+    setIsInvoiceDeleteDialogOpen(false);
+    setInvoiceToDelete(null);
   };
 
   // Handle document save
@@ -1091,13 +1121,35 @@ const Workspace: React.FC = () => {
                     <p className="text-sm text-muted-foreground mt-1">
                       {canSendInvoice 
                         ? "Manage billing and payments for this workspace."
-                        : "Create draft invoices. Upgrade to Pro to send them to clients."}
+                        : `Create draft invoices (${invoices.length}/3 used). Upgrade to Pro to send them to clients.`}
                     </p>
                   </div>
-                  <Button className="rounded-full" onClick={() => setIsInvoiceDialogOpen(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Invoice
-                  </Button>
+                  {!canSendInvoice && invoices.length >= 3 ? (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            className="rounded-full" 
+                            onClick={() => {
+                              navigate("/settings?tab=pricing");
+                              toast.info("Upgrade to Pro to create unlimited invoices");
+                            }}
+                          >
+                            <Lock className="h-4 w-4 mr-2" />
+                            Upgrade to Create More
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="bg-gray-900 text-white">
+                          <p>Free plan limit: 3 draft invoices per workspace</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : (
+                    <Button className="rounded-full" onClick={() => setIsInvoiceDialogOpen(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Invoice
+                    </Button>
+                  )}
                 </CardHeader>
                 <CardContent>
                   {invoices.length === 0 ? (
@@ -1191,23 +1243,10 @@ const Workspace: React.FC = () => {
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive"
-                                  onClick={async () => {
-                                    const success = await deleteInvoice(invoice.id, id);
-                                    if (success) {
-                                      setInvoices(prev => prev.filter(inv => inv.id !== invoice.id));
-                                      toast.success("Invoice deleted");
-                                      
-                                      // Emit socket event for real-time sync
-                                      if (id) {
-                                        emitInvoiceDeleted({
-                                          workspaceId: id,
-                                          invoiceId: invoice.id
-                                        });
-                                      }
-                                    } else {
-                                      toast.error("Failed to delete invoice");
-                                    }
-                                  }}
+                                  onClick={() => openInvoiceDeleteDialog(
+                                    invoice.id, 
+                                    invoice.invoiceNumber || `INV-${invoice.id.slice(0, 8).toUpperCase()}`
+                                  )}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                   Delete
@@ -1592,6 +1631,40 @@ const Workspace: React.FC = () => {
                 <Button
                   variant="destructive"
                   onClick={handleDeleteFile}
+                >
+                  Delete
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Invoice Delete Confirmation Dialog */}
+          <Dialog open={isInvoiceDeleteDialogOpen} onOpenChange={setIsInvoiceDeleteDialogOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Delete Invoice</DialogTitle>
+              </DialogHeader>
+              <div className="py-4">
+                <p className="text-gray-600">
+                  Are you sure you want to delete invoice <span className="font-semibold">"{invoiceToDelete?.invoiceNumber}"</span>?
+                </p>
+                <p className="text-sm text-gray-500 mt-2">
+                  This action cannot be undone.
+                </p>
+              </div>
+              <div className="flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsInvoiceDeleteDialogOpen(false);
+                    setInvoiceToDelete(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteInvoice}
                 >
                   Delete
                 </Button>
