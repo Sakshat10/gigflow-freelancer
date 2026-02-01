@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,6 +40,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
   onInvoiceCreated,
   onCancel,
 }) => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     clientName: clientName,
@@ -80,7 +82,21 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
       onInvoiceCreated(invoice);
     } catch (error: any) {
       console.error("Error creating invoice:", error);
-      toast.error(error?.message || "Failed to create invoice");
+      
+      // Check if it's the invoice limit error
+      if (error.code === 'INVOICE_LIMIT_REACHED') {
+        toast.error(
+          "Free plan limit reached (3 invoices). Upgrade to Pro for unlimited invoices.",
+          { duration: 6000 }
+        );
+        // Close the form and navigate to pricing after a short delay
+        setTimeout(() => {
+          onCancel();
+          navigate("/settings?tab=pricing");
+        }, 2000);
+      } else {
+        toast.error(error?.message || "Failed to create invoice");
+      }
     } finally {
       setLoading(false);
     }
