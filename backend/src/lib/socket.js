@@ -273,17 +273,25 @@ export function initializeSocketServer(httpServer) {
 
                 if (!workspace) return;
 
-                // Freelancer → Client notification
-                const notification = {
-                    id: Date.now().toString(),
-                    type: "invoice",
-                    title: "New invoice created",
-                    description: `Invoice ${data.invoice.invoiceNumber || 'created'} - $${data.invoice.amount}`,
-                    timestamp: new Date().toISOString(),
-                    read: false,
-                };
+                // Only send notification to client if invoice is not a draft
+                const isDraft = data.invoice.status?.toLowerCase() === 'draft';
+                
+                if (!isDraft) {
+                    // Freelancer → Client notification
+                    const notification = {
+                        id: Date.now().toString(),
+                        type: "invoice",
+                        title: "New invoice created",
+                        description: `Invoice ${data.invoice.invoiceNumber || 'created'} - $${data.invoice.amount}`,
+                        timestamp: new Date().toISOString(),
+                        read: false,
+                    };
 
-                io?.to(`workspace:${data.workspaceId}`).emit("client-notification", notification);
+                    io?.to(`workspace:${data.workspaceId}`).emit("client-notification", notification);
+                    console.log("[Socket] Sent invoice notification to client (non-draft)");
+                } else {
+                    console.log("[Socket] Skipped client notification for draft invoice");
+                }
             } catch (error) {
                 console.error("Invoice created notification error:", error);
             }
