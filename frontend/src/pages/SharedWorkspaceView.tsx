@@ -30,7 +30,10 @@ import {
   Bell,
   MessageCircle,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Upload,
+  Eye,
+  Trash2
 } from "lucide-react";
 import {
   fetchMessagesAsClient,
@@ -45,12 +48,32 @@ import {
   offClientNotification,
   ChatMessage,
   ClientNotification,
+  emitFileUploaded,
+  emitFileDeleted,
+  emitFileCommentAdded,
+  onFileUploaded,
+  onFileDeleted,
+  onFileCommentAdded,
+  offFileUploaded,
+  offFileDeleted,
+  offFileCommentAdded,
+  onInvoiceCreated,
+  onInvoiceDeleted,
+  offInvoiceCreated,
+  offInvoiceDeleted,
+  onTaskCreated,
+  onTaskStatusUpdated,
+  onTaskDeleted,
+  offTaskCreated,
+  offTaskStatusUpdated,
+  offTaskDeleted,
 } from "@/services/chatService";
 import {
   fetchFilesAsClient,
   uploadFileAsClient,
   addFileCommentAsClient,
   getFileDownloadUrl,
+  deleteFileAsClient,
   WorkspaceFile,
 } from "@/services/fileService";
 
@@ -133,6 +156,135 @@ const SharedWorkspaceView: React.FC = () => {
 
   const [expandedFileId, setExpandedFileId] = useState<string | null>(null);
   const [newFileComment, setNewFileComment] = useState<string>('');
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [previewFile, setPreviewFile] = useState<{ id: string; filename: string; url: string } | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [fileToDelete, setFileToDelete] = useState<{ id: string; filename: string } | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  // Handle file preview
+  const handlePreviewFile = async (fileId: string, filename: string) => {
+    if (!id) return;
+
+    try {
+      const downloadUrl = await getFileDownloadUrl('', fileId, id); // Use shareToken for client
+      if (downloadUrl) {
+        setPreviewFile({ id: fileId, filename, url: downloadUrl });
+        setIsPreviewOpen(true);
+      } else {
+        toast.error('Failed to load file preview');
+      }
+    } catch (error) {
+      console.error('Preview error:', error);
+      toast.error('Failed to load file preview');
+    }
+  };
+
+  // Check if file is previewable
+  const isPreviewable = (filename: string): boolean => {
+    const extension = filename.toLowerCase().split('.').pop() || '';
+    const previewableTypes = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'pdf', 'txt', 'md'];
+    return previewableTypes.includes(extension);
+  };
+
+  // Handle file upload for client
+  const handleFileUpload = async (files: FileList | null) => {
+    if (!files || !id) return;
+
+    setUploadingFile(true);
+
+    try {
+      for (const file of Array.from(files)) {
+        const uploadedFile = await uploadFileAsClient(id, file);
+        
+        if (uploadedFile) {
+          // Add the new file to the workspace
+          setWorkspace(prev => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              files: [uploadedFile, ...prev.files]
+            };
+          });
+          
+          // Emit socket event for real-time sync
+          if (workspace) {
+            emitFileUploaded({
+              workspaceId: workspace.id,
+              file: uploadedFile
+            });
+          }
+        }
+      }
+      toast.success(`${files.length} file(s) uploaded successfully`);
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Failed to upload file(s)');
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
+  // Open delete confirmation dialog
+  const openDeleteDialog = (fileId: string, filename: string) => {
+    setFileToDelete({ id: fileId, filename });
+    setIsDeleteDialogOpen(true);
+  };
+
+  // Handle file delete (client can only delete their own files)
+  const handleDeleteFile = async () => {
+    if (!id || !fileToDelete) return;
+
+    // Find the file to check uploadedBy
+    const file = workspace?.files.find(f => f.id === fileToDelete.id);
+    console.log('File to delete:', file);
+    
+    if (!file) {
+      toast.error('File not found');
+      setIsDeleteDialogOpen(false);
+      setFileToDelete(null);
+      return;
+    }
+
+    if (file.uploadedBy !== 'client') {
+      toast.error('You can only delete files you uploaded');
+      setIsDeleteDialogOpen(false);
+      setFileToDelete(null);
+      return;
+    }
+
+    try {
+      console.log('Attempting to delete file:', fileToDelete.id, 'with shareToken:', id);
+      const success = await deleteFileAsClient(id, fileToDelete.id);
+      if (success) {
+        setWorkspace(prev => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            files: prev.files.filter(f => f.id !== fileToDelete.id)
+          };
+        });
+        toast.success('File deleted');
+        
+        // Emit socket event for real-time sync
+        if (workspace) {
+          emitFileDeleted({
+            workspaceId: workspace.id,
+            fileId: fileToDelete.id
+          });
+        }
+      } else {
+        toast.error('Failed to delete file. Check console for details.');
+      }
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast.error('Failed to delete file. Check console for details.');
+    }
+    
+    setIsDeleteDialogOpen(false);
+    setFileToDelete(null);
+  };
 
   // Add comment to file (via API)
   const handleAddFileComment = async (fileId: string) => {
@@ -161,6 +313,15 @@ const SharedWorkspaceView: React.FC = () => {
         });
         setNewFileComment('');
         toast.success('Comment added');
+        
+        // Emit socket event for real-time sync
+        if (workspace) {
+          emitFileCommentAdded({
+            workspaceId: workspace.id,
+            fileId,
+            comment
+          });
+        }
       } else {
         toast.error('Failed to add comment');
       }
@@ -288,8 +449,6 @@ const SharedWorkspaceView: React.FC = () => {
       }, 100);
     };
 
-    onNewMessage(handleNewMessage);
-
     // Listen for client notifications from freelancer
     const handleClientNotification = (notification: ClientNotification) => {
       console.log('[Client] Received notification:', notification);
@@ -297,11 +456,142 @@ const SharedWorkspaceView: React.FC = () => {
       toast(`${notification.title}: ${notification.description}`);
     };
 
+    // Listen for file uploaded
+    const handleFileUploaded = (data: any) => {
+      console.log('[SharedWorkspace] File uploaded event received:', data);
+      setWorkspace(prev => {
+        if (!prev) return prev;
+        // Avoid duplicates
+        if (prev.files.some(f => f.id === data.file.id)) return prev;
+        return {
+          ...prev,
+          files: [data.file, ...prev.files]
+        };
+      });
+    };
+
+    // Listen for file deleted
+    const handleFileDeleted = (data: any) => {
+      console.log('[SharedWorkspace] File deleted event received:', data);
+      setWorkspace(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          files: prev.files.filter(f => f.id !== data.fileId)
+        };
+      });
+    };
+
+    // Listen for file comment added
+    const handleFileCommentAdded = (data: any) => {
+      console.log('[SharedWorkspace] File comment added event received:', data);
+      setWorkspace(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          files: prev.files.map(file => {
+            if (file.id === data.fileId) {
+              // Avoid duplicate comments
+              if (file.comments?.some(c => c.id === data.comment.id)) return file;
+              return {
+                ...file,
+                comments: [...(file.comments || []), data.comment]
+              };
+            }
+            return file;
+          })
+        };
+      });
+    };
+
+    // Listen for invoice created
+    const handleInvoiceCreated = (data: any) => {
+      console.log('[SharedWorkspace] Invoice created event received:', data);
+      setWorkspace(prev => {
+        if (!prev) return prev;
+        // Avoid duplicates
+        if (prev.invoices.some(inv => inv.id === data.invoice.id)) return prev;
+        return {
+          ...prev,
+          invoices: [data.invoice, ...prev.invoices]
+        };
+      });
+    };
+
+    // Listen for invoice deleted
+    const handleInvoiceDeleted = (data: any) => {
+      console.log('[SharedWorkspace] Invoice deleted event received:', data);
+      setWorkspace(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          invoices: prev.invoices.filter(inv => inv.id !== data.invoiceId)
+        };
+      });
+    };
+
+    // Listen for task created
+    const handleTaskCreated = (data: any) => {
+      console.log('[SharedWorkspace] Task created event received:', data);
+      setWorkspace(prev => {
+        if (!prev) return prev;
+        // Avoid duplicates
+        if (prev.todos.some(t => t.id === data.task.id)) return prev;
+        return {
+          ...prev,
+          todos: [data.task, ...prev.todos]
+        };
+      });
+    };
+
+    // Listen for task status updated
+    const handleTaskStatusUpdated = (data: any) => {
+      console.log('[SharedWorkspace] Task status updated event received:', data);
+      setWorkspace(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          todos: prev.todos.map(t => 
+            t.id === data.task.id ? data.task : t
+          )
+        };
+      });
+    };
+
+    // Listen for task deleted
+    const handleTaskDeleted = (data: any) => {
+      console.log('[SharedWorkspace] Task deleted event received:', data);
+      setWorkspace(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          todos: prev.todos.filter(t => t.id !== data.taskId)
+        };
+      });
+    };
+
+    onNewMessage(handleNewMessage);
     onClientNotification(handleClientNotification);
+    onFileUploaded(handleFileUploaded);
+    onFileDeleted(handleFileDeleted);
+    onFileCommentAdded(handleFileCommentAdded);
+    onInvoiceCreated(handleInvoiceCreated);
+    onInvoiceDeleted(handleInvoiceDeleted);
+    onTaskCreated(handleTaskCreated);
+    onTaskStatusUpdated(handleTaskStatusUpdated);
+    onTaskDeleted(handleTaskDeleted);
 
     return () => {
       offNewMessage(handleNewMessage);
       offClientNotification(handleClientNotification);
+      offFileUploaded(handleFileUploaded);
+      offFileDeleted(handleFileDeleted);
+      offFileCommentAdded(handleFileCommentAdded);
+      offInvoiceCreated(handleInvoiceCreated);
+      offInvoiceDeleted(handleInvoiceDeleted);
+      offTaskCreated(handleTaskCreated);
+      offTaskStatusUpdated(handleTaskStatusUpdated);
+      offTaskDeleted(handleTaskDeleted);
       leaveWorkspaceSocket(workspace.id);
     };
   }, [id, workspace]);
@@ -577,14 +867,42 @@ const SharedWorkspaceView: React.FC = () => {
             <TabsContent value="files">
               <FadeIn>
                 <Card>
-                  <CardHeader>
+                  <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle>Shared Files</CardTitle>
+                    <div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar,.7z"
+                        className="hidden"
+                        onChange={(e) => handleFileUpload(e.target.files)}
+                      />
+                      <Button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingFile}
+                        className="rounded-full"
+                      >
+                        {uploadingFile ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <FileText className="h-4 w-4 mr-2" />
+                            Upload File
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     {workspace.files.length === 0 ? (
                       <div className="text-center py-12 text-gray-500">
                         <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
                         <p>No files shared yet</p>
+                        <p className="text-sm mt-2">Upload files to share with the freelancer</p>
                       </div>
                     ) : (
                       <div className="space-y-3">
@@ -622,14 +940,38 @@ const SharedWorkspaceView: React.FC = () => {
                                     <ChevronDown className="h-3 w-3 ml-1" />
                                   )}
                                 </Button>
+                                {isPreviewable(file.filename) && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="rounded-full"
+                                    onClick={() => handlePreviewFile(file.id, file.filename)}
+                                    title="Preview file"
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                )}
                                 <Button 
                                   variant="ghost" 
                                   size="icon" 
                                   className="rounded-full"
                                   onClick={() => handleDownloadFile(file.id, file.filename)}
+                                  title="Download file"
                                 >
                                   <Download className="h-4 w-4" />
                                 </Button>
+                                {/* Only show delete button if uploaded by client */}
+                                {file.uploadedBy === 'client' && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="rounded-full text-red-500 hover:text-red-600"
+                                    onClick={() => openDeleteDialog(file.id, file.filename)}
+                                    title="Delete file"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
                               </div>
                             </div>
 
@@ -821,14 +1163,16 @@ const SharedWorkspaceView: React.FC = () => {
                     <CardTitle>Invoices</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {workspace.invoices.length === 0 ? (
+                    {workspace.invoices.filter(inv => inv.status?.toLowerCase() !== 'draft').length === 0 ? (
                       <div className="text-center py-12 text-gray-500">
                         <Receipt className="h-12 w-12 mx-auto mb-4 opacity-50" />
                         <p>No invoices yet</p>
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        {workspace.invoices.map((invoice) => (
+                        {workspace.invoices
+                          .filter(inv => inv.status?.toLowerCase() !== 'draft')
+                          .map((invoice) => (
                           <div
                             key={invoice.id}
                             onClick={() => {
@@ -989,6 +1333,84 @@ const SharedWorkspaceView: React.FC = () => {
                     )}
                   </div>
                 )}
+              </DialogContent>
+            </Dialog>
+
+            {/* File Preview Dialog */}
+            <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+              <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+                <DialogHeader className="p-6 pb-4">
+                  <DialogTitle className="flex items-center gap-2">
+                    <Eye className="h-5 w-5" />
+                    {previewFile?.filename}
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="px-6 pb-6 overflow-auto max-h-[calc(90vh-100px)]">
+                  {previewFile && (
+                    <>
+                      {/* Image Preview */}
+                      {/\.(jpg|jpeg|png|gif|webp|svg)$/i.test(previewFile.filename) && (
+                        <img
+                          src={previewFile.url}
+                          alt={previewFile.filename}
+                          className="w-full h-auto rounded-lg"
+                        />
+                      )}
+                      
+                      {/* PDF Preview */}
+                      {/\.pdf$/i.test(previewFile.filename) && (
+                        <iframe
+                          src={previewFile.url}
+                          className="w-full h-[70vh] rounded-lg border"
+                          title={previewFile.filename}
+                        />
+                      )}
+                      
+                      {/* Text Preview */}
+                      {/\.(txt|md)$/i.test(previewFile.filename) && (
+                        <iframe
+                          src={previewFile.url}
+                          className="w-full h-[70vh] rounded-lg border bg-white p-4"
+                          title={previewFile.filename}
+                        />
+                      )}
+                    </>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Delete File</DialogTitle>
+                </DialogHeader>
+                <div className="py-4">
+                  <p className="text-gray-600">
+                    Are you sure you want to delete <span className="font-semibold">"{fileToDelete?.filename}"</span>?
+                  </p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    This action cannot be undone.
+                  </p>
+                </div>
+                <div className="flex justify-end gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsDeleteDialogOpen(false);
+                      setFileToDelete(null);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={handleDeleteFile}
+                  >
+                    Delete
+                  </Button>
+                </div>
               </DialogContent>
             </Dialog>
           </Tabs>
