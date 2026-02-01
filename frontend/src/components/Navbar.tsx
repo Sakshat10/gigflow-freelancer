@@ -28,6 +28,7 @@ import {
 import { fetchWorkspaces } from "@/services/api";
 import { Workspace } from "@/types";
 import { mapWorkspaceDataArrayToWorkspaceArray } from "@/services/workspace/workspace.types";
+import { joinUserRoom } from "@/services/notificationService";
 
 const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -53,6 +54,14 @@ const Navbar: React.FC = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Ensure user room is joined (backup to NotificationContext)
+  useEffect(() => {
+    if (isAuthenticated && user?.id) {
+      console.log('[Navbar] Ensuring user room is joined for user:', user.id);
+      joinUserRoom(user.id);
+    }
+  }, [isAuthenticated, user?.id]);
 
   useEffect(() => {
     if (isAuthenticated) {
