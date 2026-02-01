@@ -15,6 +15,8 @@ import { fetchWorkspaces } from "@/services/workspace";
 import { Card } from "@/components/ui/card";
 import { Steps } from 'intro.js-react';
 import { useIntroTour, TourStep } from "@/hooks/use-intro-tour";
+import { hasFeatureAccess } from "@/utils/planFeatures";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import 'intro.js/introjs.css';
 
 const Dashboard: React.FC = () => {
@@ -205,15 +207,40 @@ const Dashboard: React.FC = () => {
               </div>
 
               <div className="flex gap-2 w-full sm:w-auto">
-                <Button
-                  id="email-clients-btn"
-                  className="rounded-full px-4 hover-translate flex-1 sm:flex-none"
-                  variant="outline"
-                  onClick={() => navigate("/client-emails")}
-                >
-                  <Mail className="h-4 w-4 mr-2" />
-                  <span className="whitespace-nowrap">Client Updates</span>
-                </Button>
+                {hasFeatureAccess(user?.plan, "clientManagement") ? (
+                  <Button
+                    id="email-clients-btn"
+                    className="rounded-full px-4 hover-translate flex-1 sm:flex-none"
+                    variant="outline"
+                    onClick={() => navigate("/client-emails")}
+                  >
+                    <Mail className="h-4 w-4 mr-2" />
+                    <span className="whitespace-nowrap">Client Updates</span>
+                  </Button>
+                ) : (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          id="email-clients-btn"
+                          className="rounded-full px-4 flex-1 sm:flex-none"
+                          variant="outline"
+                          onClick={() => {
+                            toast.info("Client Updates is a Pro Plus feature. Upgrade to unlock!", {
+                              duration: 4000,
+                            });
+                          }}
+                        >
+                          <Lock className="h-4 w-4 mr-2" />
+                          <span className="whitespace-nowrap">Client Updates</span>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="bg-gray-900 text-white">
+                        <p>Pro Plus feature - Upgrade to unlock</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
 
                 <Button
                   id="new-workspace-btn"
