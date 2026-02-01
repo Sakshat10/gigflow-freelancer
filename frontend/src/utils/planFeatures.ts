@@ -12,7 +12,7 @@ interface PlanFeatures {
 }
 
 const planFeatures: PlanFeatures = {
-  "free": ["chat", "files", "things"],
+  "free": ["chat", "files", "things", "invoices"],
   "pro": ["chat", "files", "things", "invoices"],
   "pro_plus": ["chat", "files", "things", "invoices", "documents", "emailBlaster", "clientManagement"]
 };
@@ -22,10 +22,17 @@ export const featureRequiredPlan: Record<PlanFeature, string> = {
   "chat": "free",
   "files": "free",
   "things": "free",
-  "invoices": "pro",
+  "invoices": "free",
   "documents": "pro_plus",
   "emailBlaster": "pro_plus",
   "clientManagement": "pro_plus"
+};
+
+// Check if user can send invoices (not just create drafts)
+export const canSendInvoices = (userPlan: string | undefined): boolean => {
+  if (!userPlan) return false;
+  const normalizedPlan = userPlan.toLowerCase().replace(/\s+/g, '_');
+  return normalizedPlan === "pro" || normalizedPlan === "pro_plus";
 };
 
 export const hasFeatureAccess = (userPlan: string | undefined, feature: PlanFeature): boolean => {
@@ -91,8 +98,8 @@ export const planTimelineContents = [
       "Client Chat",
       "File Sharing",
       "Task Management",
-      "1 active workspace",
-      "500MB storage"
+      "Draft Invoices (sending disabled)",
+      "1 active workspace"
     ]
   },
   {
@@ -100,10 +107,9 @@ export const planTimelineContents = [
     description: "For growing freelancers",
     features: [
       "Everything in Free",
-      "Invoicing",
-      "Document Generation",
-      "Unlimited workspaces",
-      "5GB storage"
+      "Send Invoices to Clients",
+      "Up to 5 workspaces",
+      "Priority support"
     ]
   },
   {
@@ -111,10 +117,10 @@ export const planTimelineContents = [
     description: "For established professionals",
     features: [
       "Everything in Pro",
+      "AI Document Generation",
       "Client Email Blaster",
-      "Client Management",
-      "Priority support",
-      "10GB storage"
+      "Unlimited workspaces",
+      "Advanced analytics"
     ]
   }
 ];
