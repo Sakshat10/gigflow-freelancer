@@ -24,18 +24,27 @@ export const STORAGE_BUCKET = 'workspace-files';
  * @returns {string} Safe filename
  */
 export function sanitizeFilename(filename) {
-    // Remove path separators and dangerous characters
-    const sanitized = filename
-        .replace(/[\/\\:*?"<>|]/g, '_')
-        .replace(/\s+/g, '_')
+    // Get file extension
+    const lastDotIndex = filename.lastIndexOf('.');
+    const name = lastDotIndex > 0 ? filename.substring(0, lastDotIndex) : filename;
+    const extension = lastDotIndex > 0 ? filename.substring(lastDotIndex) : '';
+    
+    // Remove all non-ASCII characters and special characters
+    // Keep only alphanumeric, hyphens, underscores, and dots
+    const sanitizedName = name
+        .normalize('NFD') // Normalize unicode characters
+        .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+        .replace(/[^\x00-\x7F]/g, '') // Remove non-ASCII characters
+        .replace(/[^a-zA-Z0-9._-]/g, '_') // Replace special chars with underscore
+        .replace(/_{2,}/g, '_') // Replace multiple underscores with single
+        .replace(/^_+|_+$/g, '') // Remove leading/trailing underscores
         .toLowerCase();
     
-    // Ensure it's not empty and has reasonable length
-    if (!sanitized || sanitized.length === 0) {
-        return 'file';
-    }
+    // Ensure it's not empty
+    const finalName = sanitizedName || 'file';
     
-    return sanitized.substring(0, 100); // Limit length
+    // Limit length and add extension back
+    return (finalName.substring(0, 100) + extension).toLowerCase();
 }
 
 /**
@@ -49,9 +58,14 @@ export function sanitizeFilename(filename) {
 export async function uploadFile(workspaceId, filename, fileBuffer, mimeType) {
     try {
         const safeFilename = sanitizeFilename(filename);
+        console.log('Original filename:', filename);
+        console.log('Sanitized filename:', safeFilename);
+        
         const timestamp = Date.now();
         const uniqueFilename = `${timestamp}_${safeFilename}`;
         const storagePath = `workspaces/${workspaceId}/${uniqueFilename}`;
+        
+        console.log('Storage path:', storagePath);
         
         const { data, error } = await supabase.storage
             .from(STORAGE_BUCKET)

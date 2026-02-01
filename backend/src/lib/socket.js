@@ -24,8 +24,10 @@ export function initializeSocketServer(httpServer) {
 
         // Join user's personal notification room
         socket.on("join-user-room", (userId) => {
-            socket.join(`user:${userId}`);
-            console.log(`User ${userId} joined notification room`);
+            const userRoom = `user:${userId}`;
+            socket.join(userRoom);
+            console.log(`[Socket] Socket ${socket.id} joined user room: ${userRoom}`);
+            console.log(`[Socket] Socket ${socket.id} is now in rooms:`, Array.from(socket.rooms));
         });
 
         // Join workspace room
@@ -74,10 +76,12 @@ export function initializeSocketServer(httpServer) {
                         },
                     });
 
+                    console.log("[Socket] Created message notification for user:", workspace.userId);
                     io?.to(`user:${workspace.userId}`).emit(
                         "notification",
                         notification
                     );
+                    console.log("[Socket] Emitted message notification to user room:", `user:${workspace.userId}`);
                 }
 
                 // Freelancer → Client notification
@@ -120,6 +124,246 @@ export function initializeSocketServer(httpServer) {
                 "task-updated",
                 data
             );
+        });
+
+        // File uploaded
+        socket.on("file-uploaded", async (data) => {
+            console.log("[Socket] File uploaded:", data);
+            io?.to(`workspace:${data.workspaceId}`).emit("file-uploaded", data);
+
+            try {
+                const workspace = await prisma.workspace.findUnique({
+                    where: { id: data.workspaceId },
+                    select: { userId: true, name: true },
+                });
+
+                if (!workspace) return;
+
+                // Determine who uploaded
+                const uploadedBy = data.file.uploadedBy;
+
+                // Client → Freelancer notification
+                if (uploadedBy === "client") {
+                    const notification = await prisma.notification.create({
+                        data: {
+                            userId: workspace.userId,
+                            type: "file",
+                            title: "New file uploaded",
+                            description: `Client uploaded: ${data.file.filename}`,
+                            link: `/workspace/${data.workspaceId}?tab=files`,
+                            workspaceId: data.workspaceId,
+                        },
+                    });
+
+                    console.log("[Socket] Created notification for user:", workspace.userId, notification);
+                    
+                    // Debug: Check which sockets are in the user room
+                    const userRoom = `user:${workspace.userId}`;
+                    const socketsInRoom = await io?.in(userRoom).allSockets();
+                    console.log(`[Socket] Sockets in room ${userRoom}:`, socketsInRoom ? Array.from(socketsInRoom) : 'none');
+                    
+                    io?.to(userRoom).emit("notification", notification);
+                    console.log("[Socket] Emitted notification to user room:", userRoom);
+                }
+
+                // Freelancer → Client notification
+                if (uploadedBy === "freelancer") {
+                    const notification = {
+                        id: Date.now().toString(),
+                        type: "file",
+                        title: "New file uploaded",
+                        description: `Freelancer uploaded: ${data.file.filename}`,
+                        timestamp: new Date().toISOString(),
+                        read: false,
+                    };
+
+                    io?.to(`workspace:${data.workspaceId}`).emit("client-notification", notification);
+                }
+            } catch (error) {
+                console.error("File upload notification error:", error);
+            }
+        });
+
+        // File deleted
+        socket.on("file-deleted", async (data) => {
+            console.log("[Socket] File deleted:", data);
+            io?.to(`workspace:${data.workspaceId}`).emit("file-deleted", data);
+
+            try {
+                const workspace = await prisma.workspace.findUnique({
+                    where: { id: data.workspaceId },
+                    select: { userId: true },
+                });
+
+                if (!workspace) return;
+
+                // Note: We don't know who deleted it from this event, so we skip notifications
+                // or you could add a 'deletedBy' field to the event
+            } catch (error) {
+                console.error("File delete notification error:", error);
+            }
+        });
+
+        // File comment added
+        socket.on("file-comment-added", async (data) => {
+            console.log("[Socket] File comment added:", data);
+            io?.to(`workspace:${data.workspaceId}`).emit("file-comment-added", data);
+
+            try {
+                const workspace = await prisma.workspace.findUnique({
+                    where: { id: data.workspaceId },
+                    select: { userId: true },
+                });
+
+                if (!workspace) return;
+
+                const file = await prisma.file.findUnique({
+                    where: { id: data.fileId },
+                    select: { filename: true },
+                });
+
+                if (!file) return;
+
+                // Client → Freelancer notification
+                if (data.comment.sender === "client") {
+                    const notification = await prisma.notification.create({
+                        data: {
+                            userId: workspace.userId,
+                            type: "file_comment",
+                            title: "New comment on file",
+                            description: `Client commented on ${file.filename}`,
+                            link: `/workspace/${data.workspaceId}?tab=files`,
+                            workspaceId: data.workspaceId,
+                        },
+                    });
+
+                    console.log("[Socket] Created file comment notification for user:", workspace.userId);
+                    io?.to(`user:${workspace.userId}`).emit("notification", notification);
+                    console.log("[Socket] Emitted notification to user room:", `user:${workspace.userId}`);
+                }
+
+                // Freelancer → Client notification
+                if (data.comment.sender === "freelancer") {
+                    const notification = {
+                        id: Date.now().toString(),
+                        type: "file_comment",
+                        title: "New comment on file",
+                        description: `Freelancer commented on ${file.filename}`,
+                        timestamp: new Date().toISOString(),
+                        read: false,
+                    };
+
+                    io?.to(`workspace:${data.workspaceId}`).emit("client-notification", notification);
+                }
+            } catch (error) {
+                console.error("File comment notification error:", error);
+            }
+        });
+
+        // Invoice created
+        socket.on("invoice-created", async (data) => {
+            console.log("[Socket] Invoice created:", data);
+            io?.to(`workspace:${data.workspaceId}`).emit("invoice-created", data);
+
+            try {
+                const workspace = await prisma.workspace.findUnique({
+                    where: { id: data.workspaceId },
+                    select: { userId: true },
+                });
+
+                if (!workspace) return;
+
+                // Freelancer → Client notification
+                const notification = {
+                    id: Date.now().toString(),
+                    type: "invoice",
+                    title: "New invoice created",
+                    description: `Invoice ${data.invoice.invoiceNumber || 'created'} - $${data.invoice.amount}`,
+                    timestamp: new Date().toISOString(),
+                    read: false,
+                };
+
+                io?.to(`workspace:${data.workspaceId}`).emit("client-notification", notification);
+            } catch (error) {
+                console.error("Invoice created notification error:", error);
+            }
+        });
+
+        // Invoice deleted
+        socket.on("invoice-deleted", async (data) => {
+            console.log("[Socket] Invoice deleted:", data);
+            io?.to(`workspace:${data.workspaceId}`).emit("invoice-deleted", data);
+        });
+
+        // Task created
+        socket.on("task-created", async (data) => {
+            console.log("[Socket] Task created:", data);
+            io?.to(`workspace:${data.workspaceId}`).emit("task-created", data);
+
+            try {
+                const workspace = await prisma.workspace.findUnique({
+                    where: { id: data.workspaceId },
+                    select: { userId: true },
+                });
+
+                if (!workspace) return;
+
+                // Freelancer → Client notification
+                const notification = {
+                    id: Date.now().toString(),
+                    type: "task",
+                    title: "New task created",
+                    description: `Task: ${data.task.title}`,
+                    timestamp: new Date().toISOString(),
+                    read: false,
+                };
+
+                io?.to(`workspace:${data.workspaceId}`).emit("client-notification", notification);
+            } catch (error) {
+                console.error("Task created notification error:", error);
+            }
+        });
+
+        // Task status updated
+        socket.on("task-status-updated", async (data) => {
+            console.log("[Socket] Task status updated:", data);
+            io?.to(`workspace:${data.workspaceId}`).emit("task-status-updated", data);
+
+            try {
+                const workspace = await prisma.workspace.findUnique({
+                    where: { id: data.workspaceId },
+                    select: { userId: true },
+                });
+
+                if (!workspace) return;
+
+                // Map status to readable text
+                const statusMap = {
+                    'todo': 'To Do',
+                    'in-progress': 'In Progress',
+                    'done': 'Done'
+                };
+
+                // Freelancer → Client notification
+                const notification = {
+                    id: Date.now().toString(),
+                    type: "task_updated",
+                    title: "Task status updated",
+                    description: `${data.task.title} moved to ${statusMap[data.task.status] || data.task.status}`,
+                    timestamp: new Date().toISOString(),
+                    read: false,
+                };
+
+                io?.to(`workspace:${data.workspaceId}`).emit("client-notification", notification);
+            } catch (error) {
+                console.error("Task status notification error:", error);
+            }
+        });
+
+        // Task deleted
+        socket.on("task-deleted", async (data) => {
+            console.log("[Socket] Task deleted:", data);
+            io?.to(`workspace:${data.workspaceId}`).emit("task-deleted", data);
         });
 
         socket.on("disconnect", () => {
