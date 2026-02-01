@@ -599,7 +599,7 @@ router.post("/:id/invoices", async (req, res) => {
 
         const { amount, dueDate, currency, taxPercentage, clientName } = req.body;
 
-        // Get user to increment invoice counter and check PayPal.me
+        // Get user to check PayPal.me
         const user = await prisma.user.findUnique({
             where: { id: currentUser.userId },
         });
@@ -615,28 +615,49 @@ router.post("/:id/invoices", async (req, res) => {
             });
         }
 
-        const invoiceNumber = `INV-${(user.invoiceCounter + 1).toString().padStart(4, "0")}`;
+        // Determine invoice status based on user plan
+        // Free users can only create draft invoices
+        const userPlan = (user.plan || 'free').toLowerCase().replace(/\s+/g, '_');
+        const canSendInvoice = userPlan === 'pro' || userPlan === 'pro_plus';
+        const invoiceStatus = canSendInvoice ? "Pending" : "draft";
 
-        const invoice = await prisma.invoice.create({
-            data: {
-                workspaceId: req.params.id,
-                clientName: clientName || "Client",
-                amount: parseFloat(amount),
-                taxPercentage: parseFloat(taxPercentage) || 0,
-                dueDate: new Date(dueDate),
-                invoiceNumber,
-                currency: currency || "USD",
-                status: "draft",
-            },
+        // Generate workspace prefix from workspace name
+        // Take first 3 letters of workspace name, remove spaces and special chars, uppercase
+        const workspacePrefix = workspace.name
+            .replace(/[^a-zA-Z0-9]/g, '') // Remove special characters and spaces
+            .substring(0, 3) // Take first 3 characters
+            .toUpperCase() // Convert to uppercase
+            .padEnd(3, 'X'); // Pad with 'X' if less than 3 characters
+
+        // Use a transaction to atomically increment counter and create invoice
+        const result = await prisma.$transaction(async (tx) => {
+            // Update user and get the new counter value
+            const updatedUser = await tx.user.update({
+                where: { id: currentUser.userId },
+                data: { invoiceCounter: { increment: 1 } },
+            });
+
+            // Generate invoice number: PREFIX-XXXX (e.g., ABC-0001, XYZ-0042)
+            const invoiceNumber = `${workspacePrefix}-${updatedUser.invoiceCounter.toString().padStart(4, "0")}`;
+
+            // Create invoice with the unique invoice number
+            const invoice = await tx.invoice.create({
+                data: {
+                    workspaceId: req.params.id,
+                    clientName: clientName || "Client",
+                    amount: parseFloat(amount),
+                    taxPercentage: parseFloat(taxPercentage) || 0,
+                    dueDate: new Date(dueDate),
+                    invoiceNumber,
+                    currency: currency || "USD",
+                    status: invoiceStatus,
+                },
+            });
+
+            return invoice;
         });
 
-        // Increment invoice counter
-        await prisma.user.update({
-            where: { id: currentUser.userId },
-            data: { invoiceCounter: { increment: 1 } },
-        });
-
-        return res.status(201).json({ invoice });
+        return res.status(201).json({ invoice: result });
     } catch (error) {
         console.error("Create invoice error:", error);
         return res.status(500).json({ error: "Internal server error" });
