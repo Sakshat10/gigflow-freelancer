@@ -104,6 +104,41 @@ router.post("/:shareToken/files", uploadSingle, handleUploadError, async (req, r
     }
 });
 
+// DELETE /api/client/:shareToken/files/:fileId - Delete file (Client can only delete their own files)
+router.delete("/:shareToken/files/:fileId", async (req, res) => {
+    try {
+        const file = await prisma.file.findUnique({
+            where: { id: req.params.fileId },
+            include: { workspace: true },
+        });
+
+        if (!file || file.workspace.shareToken !== req.params.shareToken) {
+            return res.status(404).json({ error: "File not found" });
+        }
+
+        // Only allow clients to delete files they uploaded
+        if (file.uploadedBy !== "client") {
+            return res.status(403).json({ error: "You can only delete files you uploaded" });
+        }
+
+        // Delete from Supabase Storage if it exists
+        if (file.storagePath) {
+            const { deleteFile } = await import("../lib/supabase.js");
+            await deleteFile(file.storagePath);
+        }
+
+        // Delete from database
+        await prisma.file.delete({
+            where: { id: req.params.fileId },
+        });
+
+        return res.json({ success: true });
+    } catch (error) {
+        console.error("Client delete file error:", error);
+        return res.status(500).json({ error: "Internal server error" });
+    }
+});
+
 // GET /api/client/:shareToken/files/:fileId/download - Get signed URL for file download
 router.get("/:shareToken/files/:fileId/download", async (req, res) => {
     try {
