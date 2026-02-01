@@ -3,9 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { FileText, FileSpreadsheet, Lock, Receipt, ArrowLeft, Copy, Download, RefreshCw, Check, Sparkles } from "lucide-react";
+import { FileText, FileSpreadsheet, Lock, Receipt, ArrowLeft, Copy, Download, RefreshCw, Check, Sparkles, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { getPaymentClause } from "@/services/aiContractService";
+import { useAuth } from "@/contexts/AuthContext";
 
 type DocumentType = "contract" | "proposal" | "nda" | "sow";
 type Step = "select" | "form" | "preview";
@@ -21,11 +24,51 @@ export interface SavedDocument {
 interface DocumentData {
   type: DocumentType;
   clientName: string;
+  clientEmail: string;
+  clientAddress: string;
   projectName: string;
   scope: string;
   timeline: string;
   paymentTerms: string;
   jurisdiction: string;
+  // SOW-specific fields
+  deliverables?: string;
+  milestones?: string;
+  // Proposal-specific fields
+  approach?: string;
+  estimatedCost?: string;
+}
+
+interface ValidationErrors {
+  clientName?: string;
+  clientEmail?: string;
+  scope?: string;
+  paymentTerms?: string;
+  profile?: string;
+}
+
+// Document type configuration
+interface DocumentTypeConfig {
+  id: DocumentType;
+  title: string;
+  subtitle: string;
+  icon: typeof FileText;
+  projectLabel: string;
+  projectPlaceholder: string;
+  timelineLabel: string;
+  timelinePlaceholder: string;
+  showPaymentStructure: boolean;
+  paymentRequired: boolean;
+  showScopeOfWork: boolean;
+  showRevisions: boolean;
+  showIPOwnership: boolean;
+  showTermination: boolean;
+  showLiability: boolean;
+  showJurisdiction: boolean;
+  showDeliverables?: boolean;
+  showMilestones?: boolean;
+  showApproach?: boolean;
+  showEstimatedCost?: boolean;
 }
 
 interface DocumentGeneratorProps {
@@ -43,34 +86,87 @@ interface SavedDocument {
   createdAt: string;
 }
 
-const documentTypes = [
+const documentTypes: DocumentTypeConfig[] = [
   {
-    id: "contract" as DocumentType,
+    id: "contract",
     title: "Contract",
     subtitle: "Service agreement draft",
     icon: FileText,
+    projectLabel: "Project / Service Name",
+    projectPlaceholder: "e.g. Website Development",
+    timelineLabel: "Project Duration (optional)",
+    timelinePlaceholder: "e.g. 2 months, 6 weeks, Ongoing",
+    showPaymentStructure: true,
+    paymentRequired: true,
+    showScopeOfWork: true,
+    showRevisions: true,
+    showIPOwnership: true,
+    showTermination: true,
+    showLiability: true,
+    showJurisdiction: true,
   },
   {
-    id: "proposal" as DocumentType,
-    title: "Proposal",
-    subtitle: "Project proposal draft",
-    icon: FileSpreadsheet,
-  },
-  {
-    id: "nda" as DocumentType,
+    id: "nda",
     title: "NDA",
     subtitle: "Non-disclosure agreement draft",
     icon: Lock,
+    projectLabel: "Context of Disclosure",
+    projectPlaceholder: "e.g. Discussion about potential collaboration",
+    timelineLabel: "Confidentiality Duration (optional)",
+    timelinePlaceholder: "e.g. 2 years",
+    showPaymentStructure: false,
+    paymentRequired: false,
+    showScopeOfWork: false,
+    showRevisions: false,
+    showIPOwnership: false,
+    showTermination: false,
+    showLiability: false,
+    showJurisdiction: true,
   },
   {
-    id: "sow" as DocumentType,
+    id: "sow",
     title: "SOW",
     subtitle: "Statement of work draft",
     icon: Receipt,
+    projectLabel: "Project Name",
+    projectPlaceholder: "e.g. Mobile App Development",
+    timelineLabel: "Project Duration (optional)",
+    timelinePlaceholder: "e.g. 3 months with milestones",
+    showPaymentStructure: true,
+    paymentRequired: false,
+    showScopeOfWork: true,
+    showRevisions: true,
+    showIPOwnership: true,
+    showTermination: true,
+    showLiability: true,
+    showJurisdiction: true,
+    showDeliverables: true,
+    showMilestones: true,
+  },
+  {
+    id: "proposal",
+    title: "Proposal",
+    subtitle: "Project proposal draft",
+    icon: FileSpreadsheet,
+    projectLabel: "Proposal Summary",
+    projectPlaceholder: "e.g. Website Redesign Project",
+    timelineLabel: "Estimated Timeline (optional)",
+    timelinePlaceholder: "e.g. 6-8 weeks",
+    showPaymentStructure: true,
+    paymentRequired: false,
+    showScopeOfWork: true,
+    showRevisions: false,
+    showIPOwnership: false,
+    showTermination: false,
+    showLiability: false,
+    showJurisdiction: false,
+    showApproach: true,
+    showEstimatedCost: true,
   },
 ];
 
 const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, onClose, workspaceName, onDocumentSaved }) => {
+  const { user } = useAuth();
   const [step, setStep] = useState<Step>("select");
   const [selectedType, setSelectedType] = useState<DocumentType | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -79,40 +175,141 @@ const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, onClose, 
   const [understood, setUnderstood] = useState(false);
   const [documentData, setDocumentData] = useState<DocumentData>({
     type: "contract",
-    clientName: workspaceName || "",
+    clientName: "",
+    clientEmail: "",
+    clientAddress: "",
     projectName: "",
     scope: "",
     timeline: "",
-    paymentTerms: "",
+    paymentTerms: "50% Upfront / 50% on Completion",
     jurisdiction: "",
+    deliverables: "",
+    milestones: "",
+    approach: "",
+    estimatedCost: "",
   });
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+
+  // Get current document type config
+  const getCurrentConfig = (): DocumentTypeConfig | undefined => {
+    return documentTypes.find(d => d.id === selectedType);
+  };
+
+  // Check if user profile is complete
+  const isProfileComplete = () => {
+    return !!(user?.name && user?.email);
+  };
+
+  // Validate form data
+  const validateForm = (): boolean => {
+    const errors: ValidationErrors = {};
+    const config = getCurrentConfig();
+
+    // Check profile completeness
+    if (!isProfileComplete()) {
+      errors.profile = "Complete your profile to generate documents.";
+    }
+
+    // Client name validation
+    if (!documentData.clientName.trim()) {
+      errors.clientName = "Client name is required.";
+    } else if (documentData.clientName.trim().toLowerCase() === user?.name?.toLowerCase()) {
+      errors.clientName = "Client name must not match Service Provider name.";
+    }
+
+    // Client email validation
+    if (!documentData.clientEmail.trim()) {
+      errors.clientEmail = "Client email is required.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(documentData.clientEmail)) {
+      errors.clientEmail = "Please enter a valid email address.";
+    }
+
+    // Scope validation
+    if (!documentData.scope.trim()) {
+      errors.scope = "This field is required.";
+    } else if (documentData.scope.trim().length < 20) {
+      errors.scope = "Please provide at least 20 characters.";
+    }
+
+    // Payment terms validation (only for Contract)
+    if (config?.paymentRequired && !documentData.paymentTerms) {
+      errors.paymentTerms = "Payment structure is required.";
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const canGenerateDraft = (): boolean => {
+    const config = getCurrentConfig();
+    
+    const baseValidation = 
+      isProfileComplete() &&
+      documentData.clientName.trim() !== "" &&
+      documentData.clientName.trim().toLowerCase() !== user?.name?.toLowerCase() &&
+      documentData.clientEmail.trim() !== "" &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(documentData.clientEmail) &&
+      documentData.projectName.trim() !== "" &&
+      documentData.scope.trim().length >= 20;
+
+    // Add payment validation only if required
+    if (config?.paymentRequired) {
+      return baseValidation && documentData.paymentTerms !== "";
+    }
+
+    return baseValidation;
+  };
 
   const handleTypeSelect = (type: DocumentType) => {
     setSelectedType(type);
-    setDocumentData({ ...documentData, type });
+    const config = documentTypes.find(d => d.id === type);
+    setDocumentData({ 
+      ...documentData, 
+      type,
+      paymentTerms: config?.showPaymentStructure ? "50% Upfront / 50% on Completion" : "",
+    });
     setStep("form");
   };
 
   const handleGenerateDraft = async () => {
+    // Validate form
+    if (!validateForm()) {
+      toast.error("Please fix the errors before generating the draft.");
+      return;
+    }
+
     setIsGenerating(true);
     
-    // Simulate AI generation
-    setTimeout(() => {
+    try {
+      // For now, generate without AI (AI will be added later)
       const content = generateDocumentContent(documentData);
+      
       setGeneratedContent(content);
       setStep("preview");
+      toast.success("Draft generated successfully");
+    } catch (error) {
+      console.error("Generation error:", error);
+      toast.error("Failed to generate draft. Please try again.");
+    } finally {
       setIsGenerating(false);
-    }, 2000);
+    }
   };
 
-  const handleRegenerate = () => {
+  const handleRegenerate = async () => {
     setIsGenerating(true);
-    setTimeout(() => {
+    
+    try {
+      // Generate document without AI (AI will be added later)
       const content = generateDocumentContent(documentData);
+      
       setGeneratedContent(content);
-      setIsGenerating(false);
       toast.success("Draft regenerated");
-    }, 1500);
+    } catch (error) {
+      console.error("Regeneration error:", error);
+      toast.error("Failed to regenerate. Please try again.");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleCopy = () => {
@@ -138,14 +335,21 @@ const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, onClose, 
     setSelectedType(null);
     setGeneratedContent("");
     setUnderstood(false);
+    setValidationErrors({});
     setDocumentData({
       type: "contract",
-      clientName: workspaceName || "",
+      clientName: "",
+      clientEmail: "",
+      clientAddress: "",
       projectName: "",
       scope: "",
       timeline: "",
-      paymentTerms: "",
+      paymentTerms: "50% Upfront / 50% on Completion",
       jurisdiction: "",
+      deliverables: "",
+      milestones: "",
+      approach: "",
+      estimatedCost: "",
     });
     onClose();
   };
@@ -171,6 +375,10 @@ const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, onClose, 
 
   const generateDocumentContent = (data: DocumentData): string => {
     const date = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+    const paymentClause = getPaymentClause(data.paymentTerms);
+    const freelancerName = user?.name || "[Your Name]";
+    const freelancerEmail = user?.email || "[Your Email]";
+    const freelancerCompany = user?.company || "";
     
     switch (data.type) {
       case "contract":
@@ -181,9 +389,9 @@ This Service Agreement ("Agreement") is entered into as of ${date}.
 
 1. PARTIES
 
-Service Provider: [Your Name/Company]
+Service Provider: ${freelancerName}${freelancerCompany ? ` / ${freelancerCompany}` : ""}
 Address: [Your Address]
-Email: [Your Email]
+Email: ${freelancerEmail}
 
 Client: ${data.clientName}
 Address: [Client Address]
@@ -206,9 +414,11 @@ Milestones and deadlines will be communicated and agreed upon by both parties.
 
 4. PAYMENT TERMS
 
-Payment Structure: ${data.paymentTerms || "To be determined by mutual agreement"}
+Payment Structure: ${data.paymentTerms}
 
-Payment is due according to the schedule agreed upon. Late payments may result in work suspension until payment is received.
+${paymentClause}
+
+Late payments may result in work suspension until payment is received.
 
 5. REVISIONS & SCOPE CONTROL
 
@@ -267,7 +477,7 @@ Any disputes shall be resolved through good faith negotiation or mediation befor
 By signing below, both parties agree to the terms and conditions outlined in this Agreement.
 
 Service Provider: _______________________     Date: _______________
-Print Name: [Your Name]
+Print Name: ${freelancerName}
 
 Client: _______________________     Date: _______________
 Print Name: ${data.clientName}
@@ -294,57 +504,46 @@ Thank you for the opportunity to submit this proposal. This document outlines th
 
 ${data.scope}
 
-Deliverables:
-• Detailed project deliverables based on the scope outlined above
-• Regular progress updates and communication
-• Final delivery with documentation and handoff
-• Post-delivery support as specified
-
-3. TIMELINE & MILESTONES
+${data.approach ? `3. APPROACH\n\n${data.approach}\n\n` : ""}${data.deliverables ? `${data.approach ? "4" : "3"}. DELIVERABLES\n\n${data.deliverables}\n\n` : ""}${data.approach || data.deliverables ? (data.approach && data.deliverables ? "5" : "4") : "3"}. TIMELINE & MILESTONES
 
 Project Duration: ${data.timeline || "To be discussed and agreed upon"}
 
-Key Milestones:
+${data.milestones || `Key Milestones:
 • Project kickoff and discovery
 • Design/development phase
 • Review and revision rounds
 • Final delivery and handoff
 
-Specific dates will be established upon project commencement.
+Specific dates will be established upon project commencement.`}
 
-4. INVESTMENT
+${data.approach || data.deliverables ? (data.approach && data.deliverables ? "6" : "5") : "4"}. INVESTMENT
 
-Project Investment: ${data.paymentTerms || "To be discussed"}
+${data.estimatedCost ? `Estimated Investment: ${data.estimatedCost}` : "Project Investment: To be discussed"}
+
+${data.paymentTerms ? `Payment Structure: ${data.paymentTerms}
 
 Payment Schedule:
 • Initial deposit upon agreement signing
 • Progress payments at key milestones
-• Final payment upon project completion
+• Final payment upon project completion` : "Payment terms will be outlined in the service agreement."}
 
 All fees are subject to the scope outlined above. Changes to scope may affect the total investment.
 
-5. PROCESS & COMMUNICATION
+${data.approach || data.deliverables ? (data.approach && data.deliverables ? "7" : "6") : "5"}. PROCESS & COMMUNICATION
 
 • Regular check-ins and progress updates
 • Collaborative feedback and revision process
 • Clear communication channels established
 • Timely responses to questions and concerns
 
-6. WHAT I NEED FROM YOU
+${data.approach || data.deliverables ? (data.approach && data.deliverables ? "8" : "7") : "6"}. WHAT I NEED FROM YOU
 
 • Timely feedback on deliverables
 • Access to necessary materials and information
 • Clear communication of requirements
 • Availability for scheduled meetings
 
-7. TERMS & CONDITIONS
-
-• Work begins upon signed agreement and initial payment
-• Revisions within scope are included; additional work may incur extra fees
-• Final deliverables provided upon full payment
-• Intellectual property transfers upon completion and payment
-
-8. NEXT STEPS
+${data.approach || data.deliverables ? (data.approach && data.deliverables ? "9" : "8") : "7"}. NEXT STEPS
 
 1. Review this proposal and provide feedback
 2. Schedule a call to discuss any questions
@@ -354,12 +553,13 @@ All fees are subject to the scope outlined above. Changes to scope may affect th
 I'm excited about the possibility of working together on this project. Please feel free to reach out with any questions.
 
 Best regards,
-[Your Name]
+${freelancerName}
+${freelancerEmail}
 
 
 ---
 DISCLAIMER:
-This document is AI-generated and provided for general reference only. Please consult a qualified legal professional before signing or sharing.`;
+This document is a draft for reference only.`;
 
       case "nda":
         return `NON-DISCLOSURE AGREEMENT
@@ -454,7 +654,7 @@ Any modifications must be made in writing and signed by both parties.
 By signing below, both parties agree to the terms and conditions outlined in this Agreement.
 
 Disclosing Party: _______________________     Date: _______________
-Print Name: [Your Name]
+Print Name: ${freelancerName}
 
 Receiving Party: _______________________     Date: _______________
 Print Name: ${data.clientName}
@@ -469,7 +669,7 @@ This document is AI-generated and provided for general reference only. Please co
 Draft Agreement (AI-generated)
 
 Client: ${data.clientName}
-Service Provider: [Your Name/Company]
+Service Provider: ${freelancerName}${freelancerCompany ? ` / ${freelancerCompany}` : ""}
 Date: ${date}
 
 1. PROJECT OVERVIEW
@@ -495,12 +695,12 @@ Out-of-Scope:
 
 3. DELIVERABLES
 
-The Service Provider will deliver:
+${data.deliverables || `The Service Provider will deliver:
 • [Specific deliverable 1 based on scope]
 • [Specific deliverable 2 based on scope]
 • [Specific deliverable 3 based on scope]
 • Documentation and source files as applicable
-• Final handoff and knowledge transfer
+• Final handoff and knowledge transfer`}
 
 All deliverables will be provided in the agreed-upon format.
 
@@ -508,22 +708,24 @@ All deliverables will be provided in the agreed-upon format.
 
 Project Duration: ${data.timeline || "To be determined by mutual agreement"}
 
-Key Milestones:
+${data.milestones || `Key Milestones:
 • Project kickoff: [Date]
 • Phase 1 completion: [Date]
 • Phase 2 completion: [Date]
-• Final delivery: [Date]
+• Final delivery: [Date]`}
 
 Timelines are contingent upon timely feedback and materials from the Client.
 
 5. PAYMENT SCHEDULE
 
-Total Project Fee: ${data.paymentTerms || "To be determined by mutual agreement"}
+${data.paymentTerms ? `Payment Structure: ${data.paymentTerms}
+
+${getPaymentClause(data.paymentTerms)}` : `Total Project Fee: To be determined by mutual agreement
 
 Payment Terms:
 • Initial payment: [Amount] upon SOW signing
 • Milestone payment(s): [Amount] at specified milestones
-• Final payment: [Amount] upon project completion
+• Final payment: [Amount] upon project completion`}
 
 Late payments may result in work suspension until payment is received.
 
@@ -586,22 +788,22 @@ Any changes to the scope, timeline, or deliverables must be documented in writin
 
 Change requests may affect the project timeline and total fee, subject to mutual agreement.
 
-15. GOVERNING LAW
+${data.jurisdiction ? `15. GOVERNING LAW
 
-This SOW shall be governed by the laws of ${data.jurisdiction || "[Jurisdiction to be specified]"}.
+This SOW shall be governed by the laws of ${data.jurisdiction}.
 
-16. ENTIRE AGREEMENT
+16. ENTIRE AGREEMENT` : `15. ENTIRE AGREEMENT`}
 
 This SOW, together with any referenced agreements, constitutes the entire understanding between the parties.
 
 Any modifications must be made in writing and signed by both parties.
 
-17. SIGNATURES
+${data.jurisdiction ? "17" : "16"}. SIGNATURES
 
 By signing below, both parties agree to the terms and conditions outlined in this Statement of Work.
 
 Service Provider: _______________________     Date: _______________
-Print Name: [Your Name]
+Print Name: ${freelancerName}
 
 Client: _______________________     Date: _______________
 Print Name: ${data.clientName}
@@ -666,7 +868,7 @@ This document is AI-generated and provided for general reference only. Please co
         )}
 
         {/* STEP 2: Document Context Form */}
-        {step === "form" && (
+        {step === "form" && selectedType && (
           <>
             <DialogHeader>
               <div className="flex items-center gap-2">
@@ -680,73 +882,278 @@ This document is AI-generated and provided for general reference only. Please co
               </div>
             </DialogHeader>
 
-            <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
-              <div className="space-y-2">
-                <Label htmlFor="clientName">Client Name *</Label>
-                <Input
-                  id="clientName"
-                  value={documentData.clientName}
-                  onChange={(e) => setDocumentData({ ...documentData, clientName: e.target.value })}
-                  placeholder="Client or company name"
-                />
+            <div className="space-y-6 py-4 max-h-[60vh] overflow-y-auto">
+              {/* Profile Completeness Warning */}
+              {!isProfileComplete() && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex gap-3">
+                  <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-amber-800 font-medium">
+                      Complete your profile to generate documents.
+                    </p>
+                    <p className="text-xs text-amber-700 mt-1">
+                      Required: Full Name, Email
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* 1. SERVICE PROVIDER (READ-ONLY) */}
+              <div className="space-y-3 bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h3 className="font-semibold text-sm">Service Provider (You)</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Name:</span>
+                    <span className="font-medium">{user?.name || "[Not set]"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Email:</span>
+                    <span className="font-medium">{user?.email || "[Not set]"}</span>
+                  </div>
+                  {user?.company && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Company:</span>
+                      <span className="font-medium">{user.company}</span>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="projectName">Project / Service Name *</Label>
-                <Input
-                  id="projectName"
-                  value={documentData.projectName}
-                  onChange={(e) => setDocumentData({ ...documentData, projectName: e.target.value })}
-                  placeholder="e.g. Website Redesign"
-                />
+              {/* 2. CLIENT DETAILS */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-sm">Client Details</h3>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="clientName">Client Name *</Label>
+                  <Input
+                    id="clientName"
+                    value={documentData.clientName}
+                    onChange={(e) => {
+                      setDocumentData({ ...documentData, clientName: e.target.value });
+                      if (validationErrors.clientName) {
+                        setValidationErrors({ ...validationErrors, clientName: undefined });
+                      }
+                    }}
+                    placeholder="Client or company name"
+                    className={validationErrors.clientName ? "border-red-500" : ""}
+                  />
+                  {validationErrors.clientName && (
+                    <p className="text-xs text-red-600">{validationErrors.clientName}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="clientEmail">Client Email *</Label>
+                  <Input
+                    id="clientEmail"
+                    type="email"
+                    value={documentData.clientEmail}
+                    onChange={(e) => {
+                      setDocumentData({ ...documentData, clientEmail: e.target.value });
+                      if (validationErrors.clientEmail) {
+                        setValidationErrors({ ...validationErrors, clientEmail: undefined });
+                      }
+                    }}
+                    placeholder="client@example.com"
+                    className={validationErrors.clientEmail ? "border-red-500" : ""}
+                  />
+                  {validationErrors.clientEmail && (
+                    <p className="text-xs text-red-600">{validationErrors.clientEmail}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="clientAddress">Client Address (optional)</Label>
+                  <Input
+                    id="clientAddress"
+                    value={documentData.clientAddress}
+                    onChange={(e) => setDocumentData({ ...documentData, clientAddress: e.target.value })}
+                    placeholder="Client address"
+                  />
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="scope">Scope Summary *</Label>
-                <Textarea
-                  id="scope"
-                  value={documentData.scope}
-                  onChange={(e) => setDocumentData({ ...documentData, scope: e.target.value })}
-                  placeholder="Brief description of work or project scope"
-                  rows={4}
-                />
+              {/* 3. PROJECT / CONTEXT */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-sm">
+                  {getCurrentConfig()?.projectLabel || "Project Details"}
+                </h3>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="projectName">
+                    {getCurrentConfig()?.projectLabel || "Project Name"} *
+                  </Label>
+                  <Input
+                    id="projectName"
+                    value={documentData.projectName}
+                    onChange={(e) => setDocumentData({ ...documentData, projectName: e.target.value })}
+                    placeholder={getCurrentConfig()?.projectPlaceholder || "e.g. Website Development"}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="scope">
+                    {selectedType === "nda" ? "Context of Disclosure" : "Scope Summary"} *
+                  </Label>
+                  <Textarea
+                    id="scope"
+                    value={documentData.scope}
+                    onChange={(e) => {
+                      setDocumentData({ ...documentData, scope: e.target.value });
+                      if (validationErrors.scope) {
+                        setValidationErrors({ ...validationErrors, scope: undefined });
+                      }
+                    }}
+                    placeholder={
+                      selectedType === "nda" 
+                        ? "Briefly describe the purpose of the discussion or information sharing."
+                        : "Briefly describe the work (e.g. website development, app design)"
+                    }
+                    rows={4}
+                    className={validationErrors.scope ? "border-red-500" : ""}
+                  />
+                  <div className="flex justify-between items-center">
+                    <p className="text-xs text-muted-foreground">
+                      Minimum 20 characters
+                    </p>
+                    <p className={`text-xs ${documentData.scope.length < 20 ? "text-red-600" : "text-muted-foreground"}`}>
+                      {documentData.scope.length}/20
+                    </p>
+                  </div>
+                  {validationErrors.scope && (
+                    <p className="text-xs text-red-600">{validationErrors.scope}</p>
+                  )}
+                </div>
               </div>
 
+              {/* SOW-specific: Deliverables */}
+              {getCurrentConfig()?.showDeliverables && (
+                <div className="space-y-2">
+                  <Label htmlFor="deliverables">Deliverables (optional)</Label>
+                  <Textarea
+                    id="deliverables"
+                    value={documentData.deliverables}
+                    onChange={(e) => setDocumentData({ ...documentData, deliverables: e.target.value })}
+                    placeholder="List specific deliverables for this project"
+                    rows={3}
+                  />
+                </div>
+              )}
+
+              {/* SOW-specific: Milestones */}
+              {getCurrentConfig()?.showMilestones && (
+                <div className="space-y-2">
+                  <Label htmlFor="milestones">Milestones (optional)</Label>
+                  <Textarea
+                    id="milestones"
+                    value={documentData.milestones}
+                    onChange={(e) => setDocumentData({ ...documentData, milestones: e.target.value })}
+                    placeholder="Define key project milestones"
+                    rows={3}
+                  />
+                </div>
+              )}
+
+              {/* Proposal-specific: Approach */}
+              {getCurrentConfig()?.showApproach && (
+                <div className="space-y-2">
+                  <Label htmlFor="approach">Approach (optional)</Label>
+                  <Textarea
+                    id="approach"
+                    value={documentData.approach}
+                    onChange={(e) => setDocumentData({ ...documentData, approach: e.target.value })}
+                    placeholder="Describe your approach to this project"
+                    rows={3}
+                  />
+                </div>
+              )}
+
+              {/* 4. TIMELINE / DURATION */}
               <div className="space-y-2">
-                <Label htmlFor="timeline">Timeline (optional)</Label>
+                <Label htmlFor="timeline">
+                  {getCurrentConfig()?.timelineLabel || "Timeline (optional)"}
+                </Label>
                 <Input
                   id="timeline"
                   value={documentData.timeline}
                   onChange={(e) => setDocumentData({ ...documentData, timeline: e.target.value })}
-                  placeholder="e.g. 4 weeks, 2 months"
+                  placeholder={getCurrentConfig()?.timelinePlaceholder || "e.g. 2 months"}
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="paymentTerms">Payment Terms (optional)</Label>
-                <Input
-                  id="paymentTerms"
-                  value={documentData.paymentTerms}
-                  onChange={(e) => setDocumentData({ ...documentData, paymentTerms: e.target.value })}
-                  placeholder="e.g. 50% upfront, 50% on completion"
-                />
-              </div>
+              {/* Proposal-specific: Estimated Cost */}
+              {getCurrentConfig()?.showEstimatedCost && (
+                <div className="space-y-2">
+                  <Label htmlFor="estimatedCost">Estimated Cost (optional)</Label>
+                  <Input
+                    id="estimatedCost"
+                    value={documentData.estimatedCost}
+                    onChange={(e) => setDocumentData({ ...documentData, estimatedCost: e.target.value })}
+                    placeholder="e.g. $5,000 - $7,000"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    This is an estimate only, not a binding commitment
+                  </p>
+                </div>
+              )}
 
-              <div className="space-y-2">
-                <Label htmlFor="jurisdiction">Jurisdiction (optional)</Label>
-                <Input
-                  id="jurisdiction"
-                  value={documentData.jurisdiction}
-                  onChange={(e) => setDocumentData({ ...documentData, jurisdiction: e.target.value })}
-                  placeholder="e.g. India, USA, UK"
-                />
-              </div>
+              {/* 5. PAYMENT STRUCTURE (conditional) */}
+              {getCurrentConfig()?.showPaymentStructure && (
+                <div className="space-y-2">
+                  <Label htmlFor="paymentTerms">
+                    Payment Structure {getCurrentConfig()?.paymentRequired ? "*" : "(optional)"}
+                  </Label>
+                  <Select
+                    value={documentData.paymentTerms}
+                    onValueChange={(value) => {
+                      setDocumentData({ ...documentData, paymentTerms: value });
+                      if (validationErrors.paymentTerms) {
+                        setValidationErrors({ ...validationErrors, paymentTerms: undefined });
+                      }
+                    }}
+                  >
+                    <SelectTrigger id="paymentTerms" className={validationErrors.paymentTerms ? "border-red-500" : ""}>
+                      <SelectValue placeholder="Select payment structure" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="50% Upfront / 50% on Completion">
+                        50% Upfront / 50% on Completion <span className="text-xs text-muted-foreground">(Recommended)</span>
+                      </SelectItem>
+                      <SelectItem value="100% Upfront">
+                        100% Upfront
+                      </SelectItem>
+                      <SelectItem value="Hourly (Billed Weekly)">
+                        Hourly (Billed Weekly)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {validationErrors.paymentTerms && (
+                    <p className="text-xs text-red-600">{validationErrors.paymentTerms}</p>
+                  )}
+                </div>
+              )}
+
+              {/* 6. JURISDICTION (conditional) */}
+              {getCurrentConfig()?.showJurisdiction && (
+                <div className="space-y-2">
+                  <Label htmlFor="jurisdiction">Jurisdiction (optional)</Label>
+                  <Input
+                    id="jurisdiction"
+                    value={documentData.jurisdiction}
+                    onChange={(e) => setDocumentData({ ...documentData, jurisdiction: e.target.value })}
+                    placeholder="e.g. India, USA (leave blank if unsure)"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Leave blank if unsure.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="space-y-4 pt-4 border-t">
               <Button
                 onClick={handleGenerateDraft}
-                disabled={!documentData.clientName || !documentData.projectName || !documentData.scope || isGenerating}
+                disabled={!canGenerateDraft() || isGenerating}
                 className="w-full"
               >
                 {isGenerating ? (
@@ -761,7 +1168,7 @@ This document is AI-generated and provided for general reference only. Please co
                 )}
               </Button>
               <p className="text-xs text-center text-muted-foreground">
-                AI-generated draft. Review carefully before use.
+                This document is a draft for reference only.
               </p>
             </div>
           </>
@@ -779,7 +1186,7 @@ This document is AI-generated and provided for general reference only. Please co
                   >
                     <ArrowLeft className="h-4 w-4" />
                   </button>
-                  <DialogTitle>{getDocumentTitle()} Draft</DialogTitle>
+                  <DialogTitle>Draft Agreement (AI-generated)</DialogTitle>
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -834,10 +1241,10 @@ This document is AI-generated and provided for general reference only. Please co
 
               {/* Disclaimer and Confirmation */}
               <div className="space-y-4 pt-4 border-t">
-                <div className="text-xs text-muted-foreground bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <div className="text-xs text-muted-foreground bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="font-medium mb-1">This document is a draft for reference only.</p>
                   <p>
-                    This document is AI-generated and provided for general reference only. 
-                    Please consult a qualified legal professional before signing or sharing.
+                    This is an AI-generated draft. Please consult a qualified legal professional before signing or sharing.
                   </p>
                 </div>
 
