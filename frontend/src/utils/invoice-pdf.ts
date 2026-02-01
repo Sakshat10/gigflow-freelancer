@@ -19,7 +19,7 @@ export const downloadInvoicePDF = (invoice: Invoice) => {
         </div>
         <div style="text-align: right;">
           <h2 style="font-size: 24px; font-weight: 700; margin: 0; color: #2d3748;">INVOICE</h2>
-          <p style="color: #718096; margin-top: 4px;">#${invoice.id.split('-').pop()?.toUpperCase()}</p>
+          <p style="color: #718096; margin-top: 4px;">#${invoice.invoiceNumber || invoice.id.split('-').pop()?.toUpperCase()}</p>
         </div>
       </div>
 
@@ -85,7 +85,7 @@ export const downloadInvoicePDF = (invoice: Invoice) => {
 
   const opt = {
     margin: 0,
-    filename: `invoice-${invoice.id.split('-').pop()?.toUpperCase()}.pdf`,
+    filename: `invoice-${invoice.invoiceNumber || invoice.id.split('-').pop()?.toUpperCase()}.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
     html2canvas: { scale: 2, useCORS: true },
     jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
