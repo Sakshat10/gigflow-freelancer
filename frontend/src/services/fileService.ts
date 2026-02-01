@@ -218,6 +218,26 @@ export async function fetchFilesAsClient(shareToken: string): Promise<WorkspaceF
     }
 }
 
+// Client: Delete a file (only files uploaded by client)
+export async function deleteFileAsClient(shareToken: string, fileId: string): Promise<boolean> {
+    try {
+        const response = await fetch(`${API_URL}/api/client/${shareToken}/files/${fileId}`, {
+            method: "DELETE",
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.error("Failed to delete file:", response.status, errorData);
+            return false;
+        }
+
+        return true;
+    } catch (error) {
+        console.error("Error deleting file:", error);
+        return false;
+    }
+}
+
 // Get file download URL (works for both freelancer and client)
 export async function getFileDownloadUrl(
     workspaceId: string, 
