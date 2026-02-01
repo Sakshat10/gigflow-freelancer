@@ -82,6 +82,48 @@ const SupportSettings: React.FC = () => {
                     Pro Plus users can send bulk emails to their clients using the Email Blaster feature. Create personalized email campaigns, select recipients from your client list, and track engagement all from one place.
                   </p>
                 </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium mb-1">Are contracts and documents generated on GigFlow legally binding?</h4>
+                  <p className="text-gray-600 text-sm">
+                    Documents generated on GigFlow are AI-assisted drafts created for reference purposes only. They are not a substitute for legal advice. Users should review all documents carefully and consult a qualified legal professional before signing or sharing them.
+                  </p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium mb-1">How does AI help with document creation?</h4>
+                  <p className="text-gray-600 text-sm">
+                    GigFlow uses AI to help structure documents and improve clarity based on the details you provide. The AI assists with formatting and language, but you remain responsible for reviewing and approving the final content.
+                  </p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium mb-1">Can I edit the document after it's generated?</h4>
+                  <p className="text-gray-600 text-sm">
+                    Yes. All generated documents can be reviewed, copied, downloaded, or regenerated. You should always ensure the document accurately reflects your agreement before using it.
+                  </p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium mb-1">Which document types can I generate on GigFlow?</h4>
+                  <p className="text-gray-600 text-sm">
+                    You can generate the following AI-assisted documents: Service Agreements (Contracts), Non-Disclosure Agreements (NDAs), Statements of Work (SOWs), and Project Proposals. Availability may vary by plan.
+                  </p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium mb-1">Does GigFlow sign or send documents automatically?</h4>
+                  <p className="text-gray-600 text-sm">
+                    No. GigFlow does not automatically sign, send, or enforce documents. All documents remain drafts until you choose how to use or share them.
+                  </p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium mb-1">Is my data used to train the AI?</h4>
+                  <p className="text-gray-600 text-sm">
+                    No. Your document content and client details are not used to train AI models. Your data is used only to generate documents for your account.
+                  </p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium mb-1">Should I use GigFlow documents for important legal agreements?</h4>
+                  <p className="text-gray-600 text-sm">
+                    GigFlow documents are best used as starting drafts. For important or high-value agreements, we strongly recommend consulting a legal professional before finalizing.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
