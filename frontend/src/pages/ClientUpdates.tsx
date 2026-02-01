@@ -76,7 +76,7 @@ const ClientUpdates: React.FC = () => {
   const [isEditingSubject, setIsEditingSubject] = useState(false);
   const [isEditingBody, setIsEditingBody] = useState(false);
 
-  const hasProAccess = hasFeatureAccess(user?.plan, "invoices");
+  const hasClientUpdatesAccess = hasFeatureAccess(user?.plan, "clientManagement");
 
   useEffect(() => {
     loadClients();
@@ -191,7 +191,7 @@ ${user?.name || "Your Name"}`;
   };
 
   const handleSendUpdate = () => {
-    if (!hasProAccess && sendScope === "all") {
+    if (!hasClientUpdatesAccess && sendScope === "all") {
       toast.error("Send updates to all your clients in one click — available in Pro.", {
         duration: 4000,
         action: {
@@ -226,6 +226,44 @@ ${user?.name || "Your Name"}`;
   };
 
   const recipientCount = sendScope === "all" ? clients.length : selectedClients.length;
+
+  // Feature gate: Only Pro Plus users can access Client Updates
+  if (!hasClientUpdatesAccess) {
+    return (
+      <div className="min-h-screen flex flex-col bg-gray-50">
+        <Navbar />
+        
+        <div className="container mx-auto py-8 pt-24 max-w-3xl">
+          <Card className="p-12 text-center">
+            <div className="flex flex-col items-center gap-6">
+              <div className="bg-primary/10 rounded-full p-6">
+                <Sparkles className="h-12 w-12 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold mb-3">Client Updates</h1>
+                <p className="text-muted-foreground text-lg mb-6">
+                  Send offers, announcements, or quick updates to your clients in one click
+                </p>
+              </div>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-6 max-w-md">
+                <p className="text-amber-900 font-medium mb-2">Pro Plus Feature</p>
+                <p className="text-amber-800 text-sm">
+                  Upgrade to Pro Plus to unlock Client Updates and send bulk emails to all your clients.
+                </p>
+              </div>
+              <Button 
+                size="lg"
+                className="rounded-full px-8"
+                onClick={() => window.location.href = "/settings?tab=pricing"}
+              >
+                Upgrade to Pro Plus
+              </Button>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -417,7 +455,7 @@ ${user?.name || "Your Name"}`;
                     />
                     <span className="text-base group-hover:text-primary transition-colors">
                       All clients
-                      {!hasProAccess && (
+                      {!hasClientUpdatesAccess && (
                         <span className="ml-2 text-xs text-muted-foreground bg-gray-100 px-2 py-0.5 rounded">Pro</span>
                       )}
                     </span>
