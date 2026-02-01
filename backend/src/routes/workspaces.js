@@ -621,6 +621,20 @@ router.post("/:id/invoices", async (req, res) => {
         const canSendInvoice = userPlan === 'pro' || userPlan === 'pro_plus';
         const invoiceStatus = canSendInvoice ? "Pending" : "draft";
 
+        // Check invoice limit for free tier users
+        if (userPlan === 'free') {
+            const existingInvoiceCount = await prisma.invoice.count({
+                where: { workspaceId: req.params.id }
+            });
+
+            if (existingInvoiceCount >= 3) {
+                return res.status(403).json({
+                    error: "Free plan is limited to 3 draft invoices per workspace. Upgrade to Pro to create unlimited invoices.",
+                    code: "INVOICE_LIMIT_REACHED"
+                });
+            }
+        }
+
         // Generate workspace prefix from workspace name
         // Take first 3 letters of workspace name, remove spaces and special chars, uppercase
         const workspacePrefix = workspace.name
@@ -629,16 +643,17 @@ router.post("/:id/invoices", async (req, res) => {
             .toUpperCase() // Convert to uppercase
             .padEnd(3, 'X'); // Pad with 'X' if less than 3 characters
 
-        // Use a transaction to atomically increment counter and create invoice
+        // Use a transaction to get the next sequential number for this workspace
         const result = await prisma.$transaction(async (tx) => {
-            // Update user and get the new counter value
-            const updatedUser = await tx.user.update({
-                where: { id: currentUser.userId },
-                data: { invoiceCounter: { increment: 1 } },
+            // Count existing invoices in this workspace to get the next number
+            const invoiceCount = await tx.invoice.count({
+                where: { workspaceId: req.params.id }
             });
 
-            // Generate invoice number: PREFIX-XXXX (e.g., ABC-0001, XYZ-0042)
-            const invoiceNumber = `${workspacePrefix}-${updatedUser.invoiceCounter.toString().padStart(4, "0")}`;
+            // Generate invoice number: PREFIX-XXXX (e.g., ABC-0001, XYZ-0002)
+            // Next number is count + 1
+            const nextNumber = invoiceCount + 1;
+            const invoiceNumber = `${workspacePrefix}-${nextNumber.toString().padStart(4, "0")}`;
 
             // Create invoice with the unique invoice number
             const invoice = await tx.invoice.create({
