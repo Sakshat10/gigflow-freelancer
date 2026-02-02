@@ -21,24 +21,31 @@ const PrivacyPolicy: React.FC = () => {
               
               <h2 className="text-xl font-semibold mt-8 mb-4">Introduction</h2>
               <p>
-                At GigFlow, we take your privacy seriously. This Privacy Policy explains how we collect, use, disclose, 
-                and safeguard your information when you use our platform. Please read this privacy policy carefully. 
-                If you do not agree with the terms of this privacy policy, please do not access the site.
+                GigFlow ("we", "our", "us") is a platform designed to help freelancers manage their client relationships. 
+                This Privacy Policy explains how we collect, use, and protect your information when you use our platform. 
+                Please read this policy carefully. If you do not agree with these terms, please do not use our platform.
               </p>
               
               <h2 className="text-xl font-semibold mt-8 mb-4">Information We Collect</h2>
               <p>
                 We collect information that you provide directly to us when you register for an account, create or 
-                modify your profile, set preferences, or make purchases through the platform. This includes:
+                modify your profile, set preferences, or use the platform. This includes:
               </p>
               <ul className="list-disc pl-6 mt-2 mb-4">
-                <li>Personal identifiers (name, email address, phone number)</li>
+                <li>Personal identifiers (name, email address)</li>
                 <li>Account credentials</li>
                 <li>Profile information</li>
-                <li>Payment and billing information</li>
                 <li>Business information</li>
-                <li>Content you upload to the platform</li>
+                <li>Content you upload to the platform (files, messages, invoices)</li>
               </ul>
+              
+              <h2 className="text-xl font-semibold mt-8 mb-4">Payment Information</h2>
+              <p>
+                All payment transactions are processed by third-party payment providers, such as PayPal. 
+                GigFlow does not store or process your credit card details or other sensitive payment information. 
+                When you make a payment, you are redirected to the payment provider's secure platform. 
+                Please review the payment provider's privacy policy for information on how they handle your data.
+              </p>
               
               <h2 className="text-xl font-semibold mt-8 mb-4">How We Use Your Information</h2>
               <p>
@@ -54,29 +61,52 @@ const PrivacyPolicy: React.FC = () => {
                 <li>Personalize your experience</li>
               </ul>
               
-              <h2 className="text-xl font-semibold mt-8 mb-4">Information Sharing</h2>
+              <h2 className="text-xl font-semibold mt-8 mb-4">Cookies and Tracking</h2>
               <p>
-                We do not sell, trade, or otherwise transfer your personally identifiable information to outside parties 
-                except in the following circumstances:
+                We use cookies and similar tracking technologies to improve your experience on our platform. 
+                Cookies help us with:
               </p>
               <ul className="list-disc pl-6 mt-2 mb-4">
-                <li>With vendors and service providers who need access to such information to carry out work on our behalf</li>
-                <li>In response to a request for information if we believe disclosure is in accordance with applicable law</li>
-                <li>If we believe your actions are inconsistent with our user agreements or policies</li>
-                <li>In connection with, or during negotiations of, any merger, sale of company assets, financing, or acquisition</li>
+                <li>Session management (keeping you logged in)</li>
+                <li>Performance and usability improvements</li>
+                <li>Usage analytics to understand how you use our platform</li>
+              </ul>
+              <p>
+                You can control cookies through your browser settings. Most browsers allow you to refuse cookies 
+                or delete existing cookies. Please note that disabling cookies may affect your ability to use 
+                certain features of our platform.
+              </p>
+              
+              <h2 className="text-xl font-semibold mt-8 mb-4">Information Sharing</h2>
+              <p>
+                We do not sell or rent your personal information to third parties. We may share your information in 
+                the following circumstances:
+              </p>
+              <ul className="list-disc pl-6 mt-2 mb-4">
+                <li>With service providers who help us operate our platform (hosting, analytics, customer support)</li>
+                <li>When required by law or to respond to legal requests</li>
+                <li>To protect the rights, property, or safety of GigFlow, our users, or others</li>
+                <li>In connection with a business transaction (merger, acquisition, or sale of assets)</li>
                 <li>With your consent or at your direction</li>
               </ul>
               
               <h2 className="text-xl font-semibold mt-8 mb-4">Data Security</h2>
               <p>
-                We implement appropriate technical and organizational measures to protect the security of your personal 
-                information. However, please be aware that no method of transmission over the Internet or method of 
-                electronic storage is 100% secure.
+                We implement reasonable technical and organizational measures to protect your personal information. 
+                However, no method of transmission over the Internet or electronic storage is completely secure. 
+                While we strive to protect your data, we cannot guarantee absolute security.
+              </p>
+              
+              <h2 className="text-xl font-semibold mt-8 mb-4">Children's Privacy</h2>
+              <p>
+                Our platform is not intended for users under the age of 18. We do not knowingly collect personal 
+                information from children. If you believe we have collected information from a child under 18, 
+                please contact us at privacy@gigflow.com and we will take steps to delete such information.
               </p>
               
               <h2 className="text-xl font-semibold mt-8 mb-4">Your Rights</h2>
               <p>
-                Depending on your location, you may have certain rights regarding your personal information, such as:
+                You have certain rights regarding your personal information, including:
               </p>
               <ul className="list-disc pl-6 mt-2 mb-4">
                 <li>The right to access personal information we hold about you</li>
@@ -85,17 +115,26 @@ const PrivacyPolicy: React.FC = () => {
                 <li>The right to data portability</li>
                 <li>The right to withdraw consent</li>
               </ul>
+              <p>
+                To exercise any of these rights, please contact us at privacy@gigflow.com. 
+                We will respond to your request within a reasonable timeframe.
+              </p>
               
               <h2 className="text-xl font-semibold mt-8 mb-4">Changes to This Privacy Policy</h2>
               <p>
-                We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new 
-                Privacy Policy on this page and updating the "Last Updated" date.
+                We may update this Privacy Policy from time to time to reflect changes in our practices or for 
+                other operational, legal, or regulatory reasons. We will notify you of any material changes by 
+                posting the updated policy on this page and updating the "Last Updated" date. We encourage you 
+                to review this policy periodically.
               </p>
               
               <h2 className="text-xl font-semibold mt-8 mb-4">Contact Us</h2>
               <p>
-                If you have questions about our Privacy Policy, please contact our support team at 
-                <a href="mailto:privacy@gigflow.com" className="text-blue-600 hover:underline ml-1">privacy@gigflow.com</a>.
+                If you have questions or concerns about this Privacy Policy or how we handle your information, 
+                please contact us at:
+              </p>
+              <p className="mt-2">
+                <a href="mailto:privacy@gigflow.com" className="text-blue-600 hover:underline">privacy@gigflow.com</a>
               </p>
             </div>
           </FadeIn>
