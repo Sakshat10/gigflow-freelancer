@@ -267,8 +267,8 @@ router.get("/:id/files/:fileId/download", async (req, res) => {
 
         // Handle legacy files (before Supabase migration)
         if (!file.storagePath) {
-            return res.status(410).json({ 
-                error: "File no longer available. This file was uploaded before the storage migration." 
+            return res.status(410).json({
+                error: "File no longer available. This file was uploaded before the storage migration."
             });
         }
 
@@ -279,7 +279,7 @@ router.get("/:id/files/:fileId/download", async (req, res) => {
             return res.status(500).json({ error: `Download failed: ${signedUrlResult.error}` });
         }
 
-        return res.json({ 
+        return res.json({
             downloadUrl: signedUrlResult.signedUrl,
             filename: file.filename,
             expiresIn: 300 // 5 minutes
@@ -310,7 +310,7 @@ router.delete("/:id/files/:fileId", async (req, res) => {
         // Delete from Supabase Storage if it exists there
         if (file.storagePath) {
             const deleteResult = await deleteFile(file.storagePath);
-            
+
             if (!deleteResult.success) {
                 console.warn(`Failed to delete file from storage: ${deleteResult.error}`);
                 // Continue with database deletion even if storage deletion fails
@@ -599,6 +599,32 @@ router.post("/:id/invoices", async (req, res) => {
 
         const { amount, dueDate, currency, taxPercentage, clientName } = req.body;
 
+        // 🔒 Server-side validation for invoice data
+        const parsedAmount = parseFloat(amount);
+        if (isNaN(parsedAmount) || parsedAmount <= 0 || parsedAmount > 1000000) {
+            return res.status(400).json({
+                error: "Invalid amount. Must be a positive number up to 1,000,000.",
+                code: "INVALID_AMOUNT"
+            });
+        }
+
+        if (taxPercentage !== undefined) {
+            const parsedTax = parseFloat(taxPercentage);
+            if (isNaN(parsedTax) || parsedTax < 0 || parsedTax > 100) {
+                return res.status(400).json({
+                    error: "Invalid tax percentage. Must be between 0 and 100.",
+                    code: "INVALID_TAX"
+                });
+            }
+        }
+
+        if (!dueDate || isNaN(new Date(dueDate).getTime())) {
+            return res.status(400).json({
+                error: "Invalid due date.",
+                code: "INVALID_DUE_DATE"
+            });
+        }
+
         // Get user to check PayPal.me
         const user = await prisma.user.findUnique({
             where: { id: currentUser.userId },
@@ -720,7 +746,50 @@ router.patch("/:id/invoices/:invoiceId", async (req, res) => {
             return res.status(403).json({ error: "Forbidden" });
         }
 
-        const { amount, dueDate, status, paymentUrl } = req.body;
+        const { amount, dueDate, status, paymentUrl, clientName, taxPercentage, currency } = req.body;
+
+        // 🔒 Security: Prevent editing critical fields after invoice is sent
+        const lockedStatuses = ["sent", "Sent", "pending", "Pending", "paid", "Paid"];
+        const isLocked = lockedStatuses.includes(invoice.status);
+
+        // Check if trying to modify financial fields on a locked invoice
+        if (isLocked) {
+            const financialFieldsBeingModified =
+                amount !== undefined ||
+                dueDate !== undefined ||
+                clientName !== undefined ||
+                taxPercentage !== undefined ||
+                currency !== undefined;
+
+            if (financialFieldsBeingModified) {
+                return res.status(403).json({
+                    error: "Cannot modify invoice details after it has been sent. Only status changes are allowed.",
+                    code: "INVOICE_LOCKED"
+                });
+            }
+        }
+
+        // 🔒 Validate amount if provided
+        if (amount !== undefined) {
+            const parsedAmount = parseFloat(amount);
+            if (isNaN(parsedAmount) || parsedAmount <= 0 || parsedAmount > 1000000) {
+                return res.status(400).json({
+                    error: "Invalid amount. Must be between 0 and 1,000,000.",
+                    code: "INVALID_AMOUNT"
+                });
+            }
+        }
+
+        // 🔒 Validate tax percentage if provided
+        if (taxPercentage !== undefined) {
+            const parsedTax = parseFloat(taxPercentage);
+            if (isNaN(parsedTax) || parsedTax < 0 || parsedTax > 100) {
+                return res.status(400).json({
+                    error: "Invalid tax percentage. Must be between 0 and 100.",
+                    code: "INVALID_TAX"
+                });
+            }
+        }
 
         const updated = await prisma.invoice.update({
             where: { id: req.params.invoiceId },
@@ -729,6 +798,9 @@ router.patch("/:id/invoices/:invoiceId", async (req, res) => {
                 ...(dueDate !== undefined && { dueDate: new Date(dueDate) }),
                 ...(status !== undefined && { status }),
                 ...(paymentUrl !== undefined && { paymentUrl }),
+                ...(clientName !== undefined && !isLocked && { clientName }),
+                ...(taxPercentage !== undefined && !isLocked && { taxPercentage: parseFloat(taxPercentage) }),
+                ...(currency !== undefined && !isLocked && { currency }),
             },
         });
 
