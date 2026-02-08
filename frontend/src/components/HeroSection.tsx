@@ -21,21 +21,15 @@ const HeroSection: React.FC = () => {
     <section className="pt-28 pb-20 md:pt-36 md:pb-28 px-4 overflow-hidden">
       <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 md:gap-8 items-center">
         <div className="space-y-8">
-          <FadeIn>
-            <span className="inline-block bg-blue-50 text-blue-600 rounded-full px-4 py-1.5 text-sm font-medium mb-4">
-              #1 Client Management Platform for Freelancers
-            </span>
-          </FadeIn>
-          
           <FadeIn delay="100">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-              Transform your <span className="text-gradient">freelance business</span>
+              One workspace per client. <span className="text-gradient">No chaos.</span> Get paid faster.
             </h1>
           </FadeIn>
           
           <FadeIn delay="200">
             <p className="text-lg text-gray-600 md:pr-8 leading-relaxed">
-              All-in-one platform to manage clients, projects, files, and payments. Save 12+ hours weekly and boost client satisfaction by 92%.
+              Chat, files, tasks, invoices, and updates — all in one clean workspace your clients actually understand.
             </p>
           </FadeIn>
           
@@ -43,7 +37,7 @@ const HeroSection: React.FC = () => {
             <div className="flex flex-wrap gap-4 pt-2">
               <NavLink to="/signup">
                 <Button size="lg" className="rounded-full px-8 py-6 shadow-button hover-translate">
-                  Start Free Trial
+                  Start Free (1 Client Workspace)
                 </Button>
               </NavLink>
               <Button 
@@ -54,17 +48,6 @@ const HeroSection: React.FC = () => {
               >
                 See How It Works
               </Button>
-            </div>
-          </FadeIn>
-          
-          <FadeIn delay="500">
-            <div className="pt-6 flex items-center justify-start space-x-6">
-              <div className="flex -space-x-2">
-                <div className="w-8 h-8 rounded-full bg-blue-200 flex items-center justify-center text-blue-600 text-xs font-medium">JD</div>
-                <div className="w-8 h-8 rounded-full bg-purple-200 flex items-center justify-center text-purple-600 text-xs font-medium">AP</div>
-                <div className="w-8 h-8 rounded-full bg-green-200 flex items-center justify-center text-green-600 text-xs font-medium">SK</div>
-              </div>
-              <p className="text-sm text-gray-500">Trusted by 10,000+ successful freelancers</p>
             </div>
           </FadeIn>
         </div>
