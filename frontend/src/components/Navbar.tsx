@@ -2,14 +2,14 @@
 import React, { useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { 
-  Menu, 
-  X, 
-  FileText, 
-  MessageSquare, 
-  Settings, 
-  User, 
-  Zap, 
+import {
+  Menu,
+  X,
+  FileText,
+  MessageSquare,
+  Settings,
+  User,
+  Zap,
   Sparkles,
   MessageCircle
 } from "lucide-react";
@@ -18,7 +18,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { NotificationPopover } from "@/components/ui/notification-popover";
 import { toast } from "sonner";
-import { 
+import {
   NavigationMenu,
   NavigationMenuContent,
   NavigationMenuItem,
@@ -26,7 +26,7 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { fetchWorkspaces } from "@/services/api";
-import { Workspace } from "@/types";
+import { Workspace, Notification } from "@/types";
 import { mapWorkspaceDataArrayToWorkspaceArray } from "@/services/workspace/workspace.types";
 import { joinUserRoom } from "@/services/notificationService";
 
@@ -39,9 +39,9 @@ const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const isHomePage = location.pathname === "/";
   const { isAuthenticated, logout, user } = useAuth();
-  const { 
-    markAsRead, 
-    markAllAsRead, 
+  const {
+    markAsRead,
+    markAllAsRead,
     handleNotificationClick,
     addNotification
   } = useNotifications();
@@ -106,33 +106,29 @@ const Navbar: React.FC = () => {
   useEffect(() => {
     const handleNewMessage = (event: CustomEvent) => {
       const { message, workspace, isClient } = event.detail;
-      
+
       if (message && workspace) {
         const currentPath = location.pathname;
         const messageWorkspacePath = `/workspace/${message.workspace_id}`;
-        
+
         if (!currentPath.includes(messageWorkspacePath) || !location.search.includes('tab=chat')) {
           addNotification({
             title: "New message",
             description: `You received a new message in workspace ${workspace.name}`,
-            link: `${messageWorkspacePath}?tab=chat`,
-            hasAttachment: message.has_attachment,
-            attachmentType: message.attachment_type,
-            senderName: workspace.name,
-            isClient: isClient
+            link: `${messageWorkspacePath}?tab=chat`
           });
         }
       }
     };
-    
+
     window.addEventListener('new-message', handleNewMessage as EventListener);
-    
+
     return () => {
       window.removeEventListener('new-message', handleNewMessage as EventListener);
     };
   }, [location, addNotification]);
 
-  const handleNotificationChange = (updatedNotifications) => {
+  const handleNotificationChange = (updatedNotifications: Notification[]) => {
     console.log("Notifications updated:", updatedNotifications);
   };
 
@@ -153,7 +149,7 @@ const Navbar: React.FC = () => {
 
   const getUpgradeButton = () => {
     if (!user) return null;
-    
+
     if (user.plan === "free") {
       return (
         <NavLink to="/settings/pricing">
@@ -179,8 +175,8 @@ const Navbar: React.FC = () => {
     <nav className={navbarClass}>
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         {isAuthenticated ? (
-          <NavLink 
-            to="/dashboard" 
+          <NavLink
+            to="/dashboard"
             className="text-2xl font-bold flex items-center gap-1"
             onClick={closeMobileMenu}
           >
@@ -190,8 +186,8 @@ const Navbar: React.FC = () => {
             <span className="text-gradient ml-1">GigFlow</span>
           </NavLink>
         ) : (
-          <NavLink 
-            to="/" 
+          <NavLink
+            to="/"
             className="text-2xl font-bold flex items-center gap-1"
             onClick={closeMobileMenu}
           >
@@ -205,13 +201,13 @@ const Navbar: React.FC = () => {
         <div className="hidden md:flex items-center space-x-1">
           {isAuthenticated ? (
             <>
-              <NavLink 
-                to="/invoices" 
+              <NavLink
+                to="/invoices"
                 className={({ isActive }) => cn(linkClass, isActive && activeLinkClass)}
               >
                 Invoices
               </NavLink>
-              
+
               <NavigationMenu>
                 <NavigationMenuList>
                   <NavigationMenuItem>
@@ -262,7 +258,7 @@ const Navbar: React.FC = () => {
               {getUpgradeButton()}
               <div className="flex items-center ml-4 space-x-2">
                 <div className="mr-1">
-                  <NotificationPopover 
+                  <NotificationPopover
                     onNotificationsChange={handleNotificationChange}
                     onNotificationClick={handleNotificationClick}
                     buttonClassName="rounded-full aspect-square hover:bg-gray-100"
@@ -273,14 +269,14 @@ const Navbar: React.FC = () => {
                     headerBorderColor="border-gray-200"
                   />
                 </div>
-                
+
                 <NavLink to="/settings">
                   <Button variant="outline" size="icon" className="rounded-full hover-translate">
                     <Settings size={18} />
                   </Button>
                 </NavLink>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="rounded-full px-6 hover-translate"
                   onClick={handleLogout}
                 >
@@ -290,14 +286,14 @@ const Navbar: React.FC = () => {
             </>
           ) : (
             <>
-              <NavLink 
-                to="/" 
+              <NavLink
+                to="/"
                 className={({ isActive }) => cn(linkClass, isActive && activeLinkClass)}
               >
                 Home
               </NavLink>
-              <NavLink 
-                to="/login" 
+              <NavLink
+                to="/login"
                 className="ml-4"
               >
                 <Button variant="outline" className="rounded-full px-6 hover-translate">
@@ -313,8 +309,8 @@ const Navbar: React.FC = () => {
           )}
         </div>
 
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           size="icon"
           className="md:hidden"
           onClick={toggleMobileMenu}
@@ -327,14 +323,14 @@ const Navbar: React.FC = () => {
         <div className="md:hidden absolute top-16 left-0 right-0 bg-white glass-effect z-50 py-4 px-6 space-y-4 border-b border-gray-100 animate-fade-in-fast">
           {isAuthenticated ? (
             <>
-              <NavLink 
-                to="/invoices" 
+              <NavLink
+                to="/invoices"
                 className={({ isActive }) => cn("block py-2", isActive && "text-primary font-medium")}
                 onClick={closeMobileMenu}
               >
                 Invoices
               </NavLink>
-              
+
               <div className="block py-2">
                 <span className="block mb-2 font-medium">Chat</span>
                 <div className="ml-4 space-y-2">
@@ -366,33 +362,33 @@ const Navbar: React.FC = () => {
                 </div>
               </div>
 
-              <NavLink 
-                to="/account" 
+              <NavLink
+                to="/account"
                 className={({ isActive }) => cn("block py-2", isActive && "text-primary font-medium")}
                 onClick={closeMobileMenu}
               >
                 Account
               </NavLink>
-              <NavLink 
-                to="/settings" 
+              <NavLink
+                to="/settings"
                 className={({ isActive }) => cn("block py-2", isActive && "text-primary font-medium")}
                 onClick={closeMobileMenu}
               >
                 Settings
               </NavLink>
-              
+
               {user?.plan !== "pro_plus" && (
-                <NavLink 
-                  to="/settings/pricing" 
+                <NavLink
+                  to="/settings/pricing"
                   className={({ isActive }) => cn("block py-2", isActive && "text-primary font-medium")}
                   onClick={closeMobileMenu}
                 >
                   {user?.plan === "free" ? "Upgrade to Pro" : "Upgrade to Pro Plus"}
                 </NavLink>
               )}
-              
+
               <div className="pt-2">
-                <Button 
+                <Button
                   className="w-full rounded-full"
                   onClick={handleLogout}
                 >
@@ -402,16 +398,16 @@ const Navbar: React.FC = () => {
             </>
           ) : (
             <>
-              <NavLink 
-                to="/" 
+              <NavLink
+                to="/"
                 className={({ isActive }) => cn("block py-2", isActive && "text-primary font-medium")}
                 onClick={closeMobileMenu}
               >
                 Home
               </NavLink>
               <div className="pt-2 flex flex-col space-y-2">
-                <NavLink 
-                  to="/login" 
+                <NavLink
+                  to="/login"
                   className="w-full"
                   onClick={closeMobileMenu}
                 >
@@ -419,8 +415,8 @@ const Navbar: React.FC = () => {
                     Login
                   </Button>
                 </NavLink>
-                <NavLink 
-                  to="/signup" 
+                <NavLink
+                  to="/signup"
                   className="w-full"
                   onClick={closeMobileMenu}
                 >
