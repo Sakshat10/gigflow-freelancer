@@ -11,15 +11,28 @@ datasource db {
 }
 
 model User {
-  id               String   @id @default(uuid())
-  email            String   @unique
+  id               String  @id @default(uuid())
+  email            String  @unique
   password         String
   name             String
   company          String?
-  plan             String   @default("free")
+  plan             String  @default("free")
   paypalMeUsername String?
-  invoiceCounter   Int      @default(0)
-  createdAt        DateTime @default(now())
+  invoiceCounter   Int     @default(0)
+
+  // Email verification
+  emailVerified          Boolean @default(false)
+  emailVerificationToken String? @unique
+
+  // Session management
+  refreshToken String?
+
+  // Security: Login attempt tracking
+  loginAttempts    Int       @default(0)
+  lastLoginAttempt DateTime?
+  blockedUntil     DateTime?
+
+  createdAt DateTime @default(now())
 
   workspaces    Workspace[]
   notifications Notification[]
@@ -46,7 +59,7 @@ model Workspace {
 model Message {
   id          String   @id @default(uuid())
   workspaceId String
-  sender      String   // "freelancer" | "client"
+  sender      String // "freelancer" | "client"
   text        String
   createdAt   DateTime @default(now())
 
@@ -57,10 +70,10 @@ model File {
   id          String   @id @default(uuid())
   workspaceId String
   filename    String
-  storagePath String?  // Nullable for migration
+  storagePath String? // Nullable for migration
   size        Int
-  uploadedBy  String   // "freelancer" | "client"
-  fileUrl     String   // For backward compatibility, will store storage path
+  uploadedBy  String // "freelancer" | "client"
+  fileUrl     String // For backward compatibility, will store storage path
   createdAt   DateTime @default(now())
 
   workspace Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
@@ -70,7 +83,7 @@ model File {
 model FileComment {
   id        String   @id @default(uuid())
   fileId    String
-  sender    String   // "freelancer" | "client"
+  sender    String // "freelancer" | "client"
   text      String
   createdAt DateTime @default(now())
 
@@ -107,9 +120,9 @@ model Invoice {
 model Notification {
   id          String   @id @default(uuid())
   userId      String
-  type        String   // "message", "invoice_paid", "task_updated"
+  type        String // "message", "invoice_paid", "task_updated"
   title       String
-  description String  
+  description String
   link        String?
   read        Boolean  @default(false)
   createdAt   DateTime @default(now())
