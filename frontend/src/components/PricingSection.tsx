@@ -42,7 +42,7 @@ const plans = [
     name: "Pro Plus",
     price: "$19.99",
     yearlyPrice: "$199.99",
-    description: "Power users & agencies",
+    description: "Scale your freelance business",
     features: [
       "Unlimited client workspaces",
       "Everything in Pro",
