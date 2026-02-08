@@ -153,8 +153,8 @@ router.get("/:shareToken/files/:fileId/download", async (req, res) => {
 
         // Handle legacy files (before Supabase migration)
         if (!file.storagePath) {
-            return res.status(410).json({ 
-                error: "File no longer available. This file was uploaded before the storage migration." 
+            return res.status(410).json({
+                error: "File no longer available. This file was uploaded before the storage migration."
             });
         }
 
@@ -165,7 +165,7 @@ router.get("/:shareToken/files/:fileId/download", async (req, res) => {
             return res.status(500).json({ error: `Download failed: ${signedUrlResult.error}` });
         }
 
-        return res.json({ 
+        return res.json({
             downloadUrl: signedUrlResult.signedUrl,
             filename: file.filename,
             expiresIn: 300 // 5 minutes
@@ -247,24 +247,56 @@ router.get("/:shareToken/invoices", async (req, res) => {
 });
 
 // POST /api/client/:shareToken/invoices/:invoiceId/pay
+// 🔒 SECURITY: Clients cannot mark invoices as paid directly
+// This endpoint only returns the payment URL - actual payment confirmation
+// must be done by the freelancer after verifying payment was received
 router.post("/:shareToken/invoices/:invoiceId/pay", async (req, res) => {
     try {
         const invoice = await prisma.invoice.findUnique({
             where: { id: req.params.invoiceId },
-            include: { workspace: true },
+            include: {
+                workspace: {
+                    include: {
+                        user: {
+                            select: { paypalMeUsername: true }
+                        }
+                    }
+                }
+            },
         });
 
         if (!invoice || invoice.workspace.shareToken !== req.params.shareToken) {
             return res.status(404).json({ error: "Invoice not found" });
         }
 
-        // Mark invoice as paid
-        const updated = await prisma.invoice.update({
-            where: { id: req.params.invoiceId },
-            data: { status: "paid" },
-        });
+        // Check if already paid
+        if (invoice.status === "paid" || invoice.status === "Paid") {
+            return res.status(400).json({ error: "Invoice has already been paid" });
+        }
 
-        return res.json({ invoice: updated });
+        // Get PayPal.me URL for payment
+        const paypalUsername = invoice.workspace.user?.paypalMeUsername;
+        if (!paypalUsername) {
+            return res.status(400).json({
+                error: "Payment not available. Freelancer has not set up PayPal."
+            });
+        }
+
+        // Calculate total amount with tax
+        const taxAmount = invoice.amount * (invoice.taxPercentage || 0) / 100;
+        const totalAmount = invoice.amount + taxAmount;
+
+        // Generate PayPal.me payment URL
+        const paymentUrl = `https://paypal.me/${paypalUsername}/${totalAmount.toFixed(2)}${invoice.currency || 'USD'}`;
+
+        // 🔒 DO NOT mark as paid - only redirect to payment
+        // The freelancer must manually confirm payment after receiving it
+        return res.json({
+            paymentUrl,
+            amount: totalAmount,
+            currency: invoice.currency || "USD",
+            message: "Please complete payment via PayPal. The freelancer will confirm receipt of payment."
+        });
     } catch (error) {
         console.error("Pay invoice error:", error);
         return res.status(500).json({ error: "Internal server error" });
