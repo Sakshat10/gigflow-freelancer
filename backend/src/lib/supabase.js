@@ -28,7 +28,7 @@ export function sanitizeFilename(filename) {
     const lastDotIndex = filename.lastIndexOf('.');
     const name = lastDotIndex > 0 ? filename.substring(0, lastDotIndex) : filename;
     const extension = lastDotIndex > 0 ? filename.substring(lastDotIndex) : '';
-    
+
     // Remove all non-ASCII characters and special characters
     // Keep only alphanumeric, hyphens, underscores, and dots
     const sanitizedName = name
@@ -39,34 +39,40 @@ export function sanitizeFilename(filename) {
         .replace(/_{2,}/g, '_') // Replace multiple underscores with single
         .replace(/^_+|_+$/g, '') // Remove leading/trailing underscores
         .toLowerCase();
-    
+
     // Ensure it's not empty
     const finalName = sanitizedName || 'file';
-    
+
     // Limit length and add extension back
     return (finalName.substring(0, 100) + extension).toLowerCase();
 }
 
 /**
- * Upload file to Supabase Storage
+ * Upload file to Supabase Storage with UUID-based naming
  * @param {string} workspaceId - The workspace ID
  * @param {string} filename - The original filename
  * @param {Buffer} fileBuffer - The file buffer
  * @param {string} mimeType - The MIME type
- * @returns {Promise<{success: boolean, storagePath?: string, error?: string}>}
+ * @returns {Promise<{success: boolean, storagePath?: string, originalFilename?: string, error?: string}>}
  */
 export async function uploadFile(workspaceId, filename, fileBuffer, mimeType) {
     try {
-        const safeFilename = sanitizeFilename(filename);
-        console.log('Original filename:', filename);
-        console.log('Sanitized filename:', safeFilename);
-        
-        const timestamp = Date.now();
-        const uniqueFilename = `${timestamp}_${safeFilename}`;
+        // Import UUID
+        const { v4: uuidv4 } = await import('uuid');
+
+        // Get file extension
+        const lastDotIndex = filename.lastIndexOf('.');
+        const extension = lastDotIndex > 0 ? filename.substring(lastDotIndex).toLowerCase() : '';
+
+        // Generate UUID-based filename for security
+        const uuid = uuidv4();
+        const uniqueFilename = `${uuid}${extension}`;
         const storagePath = `workspaces/${workspaceId}/${uniqueFilename}`;
-        
+
+        console.log('Original filename:', filename);
+        console.log('UUID filename:', uniqueFilename);
         console.log('Storage path:', storagePath);
-        
+
         const { data, error } = await supabase.storage
             .from(STORAGE_BUCKET)
             .upload(storagePath, fileBuffer, {
@@ -79,7 +85,11 @@ export async function uploadFile(workspaceId, filename, fileBuffer, mimeType) {
             return { success: false, error: error.message };
         }
 
-        return { success: true, storagePath };
+        return {
+            success: true,
+            storagePath,
+            originalFilename: filename // Keep original filename for display purposes
+        };
     } catch (error) {
         console.error('Upload file error:', error);
         return { success: false, error: error.message };
@@ -89,10 +99,10 @@ export async function uploadFile(workspaceId, filename, fileBuffer, mimeType) {
 /**
  * Generate signed URL for file download
  * @param {string} storagePath - The storage path
- * @param {number} expiresIn - Expiry time in seconds (default: 300 = 5 minutes)
+ * @param {number} expiresIn - Expiry time in seconds (default: 600 = 10 minutes)
  * @returns {Promise<{success: boolean, signedUrl?: string, error?: string}>}
  */
-export async function getSignedUrl(storagePath, expiresIn = 300) {
+export async function getSignedUrl(storagePath, expiresIn = 600) {
     try {
         const { data, error } = await supabase.storage
             .from(STORAGE_BUCKET)
