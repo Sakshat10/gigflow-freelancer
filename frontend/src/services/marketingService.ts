@@ -77,37 +77,37 @@ export const fetchFeatures = async (): Promise<Feature[]> => {
     {
       icon: "KeyRound",
       title: "Secure Client Workspaces",
-      description: "Create branded, password-protected client spaces with customizable access controls and seamless sharing.",
+      description: "One private workspace per client. Keep chat, files, tasks, and invoices together — no mixing clients, no confusion.",
       color: "blue",
     },
     {
       icon: "Upload",
-      title: "Smart File Management",
-      description: "Organize files with version control, approval workflows, and automatic notifications when clients view documents.",
+      title: "Never lose files again",
+      description: "Upload files once. Clients always see the latest version. No re-sending on WhatsApp.",
       color: "purple",
     },
     {
       icon: "MessageSquare",
-      title: "Unified Communication",
-      description: "Chat, video call, share screens, and collaborate in real-time without juggling multiple communication tools.",
+      title: "One chat your client actually uses",
+      description: "Stop switching between WhatsApp, email, and calls. Everything stays inside the workspace.",
       color: "green",
     },
     {
       icon: "FileText",
       title: "Professional Invoicing",
-      description: "Generate branded invoices, set up recurring billing, and track payments with automated reminders and receipt generation.",
+      description: "Send invoices without awkward follow-ups. Create invoices, send them to clients, and track payments in one place.",
       color: "amber",
     },
     {
       icon: "Bell",
-      title: "Client Engagement Tools",
-      description: "Boost client satisfaction with automated follow-ups, feedback collection, and personalized communication.",
+      title: "Client Updates",
+      description: "Keep clients in the loop with project updates. No more \"kya progress hai?\" messages.",
       color: "pink",
     },
     {
       icon: "CreditCard",
-      title: "Flexible Growth Plans",
-      description: "Scale your tools as your business grows with transparent pricing and no hidden fees or complicated contracts.",
+      title: "Simple Pricing",
+      description: "Start free with one client. Upgrade when you're ready. No contracts, cancel anytime.",
       color: "indigo",
     }
   ];
@@ -118,33 +118,33 @@ export const fetchBentoCardData = async (): Promise<BentoCardData[]> => {
   
   return [
     {
-      title: "Productivity Boost",
-      value: "43%",
-      subtitle: "Average increase in productivity for freelancers using GigFlow's integrated workspace",
+      title: "Fewer Payment Follow-ups",
+      value: "✓",
+      subtitle: "Send invoices directly from the workspace. Clients see them, you get paid faster.",
       colors: ["#3B82F6", "#60A5FA", "#93C5FD"]
     },
     {
-      title: "Client Retention",
-      value: "92%",
-      subtitle: "Of freelancers report improved client relationships and higher retention rates",
+      title: "No More File Confusion",
+      value: "✓",
+      subtitle: "Upload once. Clients always see the latest version. No more WhatsApp file hunting.",
       colors: ["#60A5FA", "#34D399", "#93C5FD"]
     },
     {
-      title: "Time Savings",
-      value: "12hrs",
-      subtitle: "Average weekly time saved on admin tasks, allowing focus on billable client work",
+      title: "Everything in One Place",
+      value: "✓",
+      subtitle: "Chat, files, tasks, invoices — all inside one client workspace. No tool switching.",
       colors: ["#F59E0B", "#A78BFA", "#FBCFE8"]
     },
     {
-      title: "Global Community",
-      value: "10,000+",
-      subtitle: "Successful freelancers using GigFlow across 32 countries and growing",
+      title: "Look Professional",
+      value: "✓",
+      subtitle: "Even if you're working solo, your clients see a clean, organized workspace.",
       colors: ["#3B82F6", "#A78BFA", "#FBCFE8"]
     },
     {
-      title: "Client Satisfaction",
-      value: "4.9/5",
-      subtitle: "Average client satisfaction score, based on 2,500+ verified reviews across all industries",
+      title: "Start Free",
+      value: "✓",
+      subtitle: "One free client workspace. No credit card. Upgrade when you're ready.",
       colors: ["#EC4899", "#F472B6", "#3B82F6"]
     }
   ];
