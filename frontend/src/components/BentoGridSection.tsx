@@ -38,9 +38,17 @@ const BentoGridSection: React.FC = () => {
     <section className="py-20 px-4 overflow-hidden">
       <div className="max-w-7xl mx-auto">
         <FadeIn>
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-            Why Freelancers Choose <span className="text-gradient">GigFlow</span>
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
+            Why freelancers <span className="text-gradient">switch to GigFlow</span>
           </h2>
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <ul className="text-gray-600 text-lg space-y-2">
+              <li>✓ Fewer payment follow-ups</li>
+              <li>✓ No more "latest file kaunsa hai?" messages</li>
+              <li>✓ Everything stays inside one client workspace</li>
+              <li>✓ Look professional even if you're working solo</li>
+            </ul>
+          </div>
         </FadeIn>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-[800px]">
