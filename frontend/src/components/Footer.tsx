@@ -80,7 +80,8 @@ const Footer: React.FC = () => {
           </div>
         </div>
         
-        <div className="mt-8 pt-8 border-t border-gray-100 text-center text-gray-500 text-sm">
+        <div className="mt-8 pt-8 border-t border-gray-100 text-center text-gray-500 text-sm space-y-2">
+          <p className="text-gray-600">Built for freelancers. No contracts. Cancel anytime.</p>
           <p>© {new Date().getFullYear()} GigFlow. All rights reserved.</p>
         </div>
       </div>
