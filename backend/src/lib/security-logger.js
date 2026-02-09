@@ -2,6 +2,7 @@ import winston from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { securityAlerts } from './security-alerts.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -174,6 +175,9 @@ export const securityLogger = {
             ip,
             details: { reason, duration }
         });
+
+        // 🔒 Send alert for IP blocking
+        securityAlerts.ipBlocked(ip, reason, duration);
     },
 
     // Suspicious activity
@@ -185,11 +189,11 @@ export const securityLogger = {
             details: { activity, ...details }
         });
 
-        // In production, this could trigger alerts (email, Slack, etc.)
-        if (process.env.NODE_ENV === 'production') {
-            // TODO: Implement alert mechanism (email, Slack webhook, etc.)
-            console.error(`🚨 SECURITY ALERT: ${activity} from ${ip}`);
-        }
+        // 🔒 Send real-time alerts via email/Slack
+        securityAlerts.generic(activity, ip, {
+            'User ID': userId || 'Anonymous',
+            ...details
+        });
     }
 };
 
