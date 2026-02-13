@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Upload, X, FileText, FileImage, FileVideo, FileAudio, Search, Download, Trash2 } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
 import {
   AlertDialog,
   AlertDialogAction,
