@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FileText, FileSpreadsheet, Lock, Receipt, ArrowLeft, Copy, Download, RefreshCw, Check, Sparkles, AlertCircle } from "lucide-react";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
 import { getPaymentClause } from "@/services/aiContractService";
 import { useAuth } from "@/contexts/AuthContext";
 
