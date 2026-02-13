@@ -2,7 +2,7 @@
 "use client";
 import React, { useState } from "react";
 import { FileUploadAnimated } from "@/components/ui/file-upload-animated";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
 
 export function FileUploadAnimatedDemo() {
   const [files, setFiles] = useState<File[]>([]);
