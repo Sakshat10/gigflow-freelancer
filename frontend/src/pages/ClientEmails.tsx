@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Mail, Plus, Search, Send, Trash2, Edit, DollarSign, Briefcase, TrendingUp } from "lucide-react";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { hasFeatureAccess } from "@/utils/planFeatures";
 
