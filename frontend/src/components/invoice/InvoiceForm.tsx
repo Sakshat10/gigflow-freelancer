@@ -77,7 +77,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
       const invoice = await createInvoice({
         ...formData,
         workspaceId,
-        status: "Pending",
+        // Status is determined by backend based on user plan
       });
       onInvoiceCreated(invoice);
     } catch (error: any) {
