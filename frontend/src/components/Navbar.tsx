@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { NotificationPopover } from "@/components/ui/notification-popover";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
 import {
   NavigationMenu,
   NavigationMenuContent,
