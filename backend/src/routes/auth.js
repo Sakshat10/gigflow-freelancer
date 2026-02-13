@@ -15,6 +15,7 @@ import {
 import { loginLimiter, signupLimiter, checkIPBlock, trackLoginFailure, resetLoginFailures } from "../middleware/rate-limiter.js";
 import { securityLogger } from "../lib/security-logger.js";
 import { sanitizeEmail } from "../middleware/input-sanitizer.js";
+import { sendEmail } from "../lib/email.js";
 import { v4 as uuidv4 } from "uuid";
 
 const router = Router();
@@ -118,10 +119,19 @@ router.post("/register", signupLimiter, async (req, res) => {
             },
         });
 
-        // In production, send verification email here
-        // For now, log the token (in production, this would be sent via email)
-        console.log(`📧 Email verification token for ${user.email}: ${emailVerificationToken}`);
-        console.log(`📧 Verification URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-email/${emailVerificationToken}`);
+        // Send verification email
+        const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:8080'}/verify-email/${emailVerificationToken}`;
+        await sendEmail(
+            user.email,
+            "Verify your GigFlow email",
+            `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #3b82f6;">Welcome to GigFlow!</h2>
+                <p>Please verify your email address by clicking the button below:</p>
+                <a href="${verificationUrl}" style="display: inline-block; background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 16px;">Verify Email</a>
+                <p style="color: #999; margin-top: 24px; font-size: 12px;">If you did not create a GigFlow account, you can ignore this email.</p>
+            </div>`
+        );
+        console.log(`📧 Verification email sent to ${user.email}`);
 
         // Generate tokens
         const token = generateToken({ userId: user.id, email: user.email });
@@ -146,6 +156,7 @@ router.post("/register", signupLimiter, async (req, res) => {
                 name: user.name,
                 plan: user.plan,
                 emailVerified: user.emailVerified,
+                createdAt: user.createdAt,
             },
             message: "Registration successful. Please check your email to verify your account."
         });
@@ -231,6 +242,7 @@ router.post("/login", checkIPBlock, loginLimiter, async (req, res) => {
                 name: user.name,
                 plan: user.plan,
                 emailVerified: user.emailVerified,
+                createdAt: user.createdAt,
             },
         });
     } catch (error) {
@@ -264,6 +276,54 @@ router.get("/verify-email/:token", async (req, res) => {
         return res.json({ message: "Email verified successfully!" });
     } catch (error) {
         console.error("Email verification error:", error);
+        return res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// POST /api/auth/resend-verification
+router.post("/resend-verification", async (req, res) => {
+    try {
+        const currentUser = await getCurrentUser(req);
+        if (!currentUser) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        const user = await prisma.user.findUnique({
+            where: { id: currentUser.userId },
+        });
+
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        if (user.emailVerified) {
+            return res.status(400).json({ error: "Email is already verified" });
+        }
+
+        // Generate new verification token
+        const emailVerificationToken = uuidv4();
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { emailVerificationToken },
+        });
+
+        // Send verification email
+        const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:8080'}/verify-email/${emailVerificationToken}`;
+        await sendEmail(
+            user.email,
+            "Verify your GigFlow email",
+            `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #3b82f6;">Verify your email</h2>
+                <p>Please verify your email address by clicking the button below:</p>
+                <a href="${verificationUrl}" style="display: inline-block; background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 16px;">Verify Email</a>
+                <p style="color: #999; margin-top: 24px; font-size: 12px;">If you did not create a GigFlow account, you can ignore this email.</p>
+            </div>`
+        );
+
+        return res.json({ message: "Verification email sent successfully" });
+    } catch (error) {
+        console.error("Resend verification error:", error);
         return res.status(500).json({ error: "Internal server error" });
     }
 });
@@ -313,6 +373,7 @@ router.get("/me", async (req, res) => {
                 name: true,
                 plan: true,
                 emailVerified: true,
+                createdAt: true,
             },
         });
 
@@ -352,6 +413,101 @@ router.post("/logout", async (req, res) => {
         return res.json({ message: "Logged out successfully" });
     } catch (error) {
         console.error("Logout error:", error);
+        return res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// POST /api/auth/forgot-password
+router.post("/forgot-password", async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ error: "Email is required" });
+        }
+
+        let sanitizedEmail;
+        try {
+            sanitizedEmail = sanitizeEmail(email);
+        } catch (error) {
+            return res.status(400).json({ error: "Invalid email format" });
+        }
+
+        // Always return success to prevent email enumeration
+        const user = await prisma.user.findUnique({
+            where: { email: sanitizedEmail },
+        });
+
+        if (user) {
+            const resetToken = uuidv4();
+            const resetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+            await prisma.user.update({
+                where: { id: user.id },
+                data: {
+                    passwordResetToken: resetToken,
+                    passwordResetExpires: resetExpires,
+                },
+            });
+
+            const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:8080'}/reset-password/${resetToken}`;
+            await sendEmail(
+                user.email,
+                "Reset your GigFlow password",
+                `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2 style="color: #3b82f6;">Password Reset</h2>
+                    <p>You requested a password reset. Click the button below to set a new password:</p>
+                    <a href="${resetUrl}" style="display: inline-block; background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 16px;">Reset Password</a>
+                    <p style="color: #999; margin-top: 24px; font-size: 12px;">This link expires in 1 hour. If you did not request this, you can ignore this email.</p>
+                </div>`
+            );
+        }
+
+        return res.json({ message: "If an account with that email exists, a password reset link has been sent." });
+    } catch (error) {
+        console.error("Forgot password error:", error);
+        return res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// POST /api/auth/reset-password
+router.post("/reset-password", async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+
+        if (!token || !newPassword) {
+            return res.status(400).json({ error: "Token and new password are required" });
+        }
+
+        if (newPassword.length < 8) {
+            return res.status(400).json({ error: "Password must be at least 8 characters long" });
+        }
+
+        const user = await prisma.user.findUnique({
+            where: { passwordResetToken: token },
+        });
+
+        if (!user || !user.passwordResetExpires || new Date(user.passwordResetExpires) < new Date()) {
+            return res.status(400).json({ error: "Invalid or expired reset token" });
+        }
+
+        const hashedPassword = await hashPassword(newPassword);
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                password: hashedPassword,
+                passwordResetToken: null,
+                passwordResetExpires: null,
+                // Also reset login attempts
+                loginAttempts: 0,
+                blockedUntil: null,
+            },
+        });
+
+        return res.json({ message: "Password reset successfully. You can now log in with your new password." });
+    } catch (error) {
+        console.error("Reset password error:", error);
         return res.status(500).json({ error: "Internal server error" });
     }
 });

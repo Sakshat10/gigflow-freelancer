@@ -5,6 +5,7 @@ import workspacesRouter from "./workspaces.js";
 import notificationsRouter from "./notifications.js";
 import clientRouter from "./client.js";
 import invoicesRouter from "./invoices.js";
+import webhookRouter from "./webhook.js";
 
 const router = Router();
 
@@ -15,5 +16,6 @@ router.use("/workspaces", workspacesRouter);
 router.use("/notifications", notificationsRouter);
 router.use("/client", clientRouter);
 router.use("/invoices", invoicesRouter);
+router.use("/webhooks", webhookRouter);
 
 export default router;

@@ -3,8 +3,12 @@ import { prisma } from "../lib/prisma.js";
 import { uploadSingle, handleUploadError } from "../lib/upload.js";
 import { uploadFile, getSignedUrl } from "../lib/supabase.js";
 import { v4 as uuidv4 } from "uuid";
+import { clientRouteLimiter } from "../middleware/rate-limiter.js";
 
 const router = Router();
+
+// Apply rate limiting to all client routes
+router.use(clientRouteLimiter);
 
 // GET /api/client/:shareToken - Get workspace by share token
 router.get("/:shareToken", async (req, res) => {
@@ -15,7 +19,13 @@ router.get("/:shareToken", async (req, res) => {
                 files: true,
                 todos: true,
                 messages: true,
-                invoices: true,
+                invoices: {
+                    where: {
+                        status: {
+                            not: 'draft' // Exclude draft invoices from client view
+                        }
+                    }
+                },
             },
         });
 
@@ -232,7 +242,15 @@ router.get("/:shareToken/invoices", async (req, res) => {
     try {
         const workspace = await prisma.workspace.findUnique({
             where: { shareToken: req.params.shareToken },
-            include: { invoices: true },
+            include: {
+                invoices: {
+                    where: {
+                        status: {
+                            not: 'draft' // Exclude draft invoices from client view
+                        }
+                    }
+                }
+            },
         });
 
         if (!workspace) {

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import {
     hashPassword,
+    verifyPassword,
     getCurrentUser,
     requireAuth,
 } from "../lib/auth.js";
@@ -109,8 +110,8 @@ router.patch("/password", async (req, res) => {
             return res.status(400).json({ error: "Current and new password are required" });
         }
 
-        if (newPassword.length < 6) {
-            return res.status(400).json({ error: "New password must be at least 6 characters" });
+        if (newPassword.length < 8) {
+            return res.status(400).json({ error: "New password must be at least 8 characters" });
         }
 
         // Get user with password
@@ -122,9 +123,8 @@ router.patch("/password", async (req, res) => {
             return res.status(404).json({ error: "User not found" });
         }
 
-        // Verify current password
-        const bcrypt = await import("bcryptjs");
-        const isValid = await bcrypt.compare(currentPassword, user.password);
+        // Verify current password using argon2 (matches registration hashing)
+        const isValid = await verifyPassword(currentPassword, user.password);
 
         if (!isValid) {
             return res.status(401).json({ error: "Current password is incorrect" });
@@ -139,7 +139,21 @@ router.patch("/password", async (req, res) => {
             data: { password: hashedPassword },
         });
 
-        return res.json({ message: "Password updated successfully" });
+        // Clear auth cookies to force re-login
+        res.clearCookie("auth_token", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            path: "/",
+        });
+        res.clearCookie("refresh_token", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            path: "/",
+        });
+
+        return res.json({ message: "Password updated successfully", forceLogout: true });
     } catch (error) {
         console.error("Change password error:", error);
         return res.status(500).json({ error: "Internal server error" });
@@ -196,15 +210,32 @@ router.patch("/plan", async (req, res) => {
             return res.status(401).json({ error: "Unauthorized" });
         }
 
-        const { plan } = req.body;
+        const { plan, subscriptionId } = req.body;
 
-        if (!plan || !["free", "pro"].includes(plan)) {
-            return res.status(400).json({ error: "Invalid plan" });
+        if (!plan || !["free", "pro", "pro_plus"].includes(plan)) {
+            return res.status(400).json({ error: "Invalid plan. Must be 'free', 'pro', or 'pro_plus'" });
+        }
+
+        // Require subscriptionId for paid plans
+        if (plan !== "free" && !subscriptionId) {
+            return res.status(400).json({ error: "Subscription ID is required for paid plans" });
+        }
+
+        const updateData = { plan };
+
+        if (plan === "free") {
+            // Downgrading to free — clear subscription data
+            updateData.subscriptionId = null;
+            updateData.subscriptionStatus = null;
+        } else {
+            // Upgrading to paid plan — store subscription data
+            updateData.subscriptionId = subscriptionId;
+            updateData.subscriptionStatus = "active";
         }
 
         const updatedUser = await prisma.user.update({
             where: { id: currentUser.userId },
-            data: { plan },
+            data: updateData,
             select: {
                 id: true,
                 email: true,
@@ -216,6 +247,41 @@ router.patch("/plan", async (req, res) => {
         return res.json({ user: updatedUser });
     } catch (error) {
         console.error("Update plan error:", error);
+        return res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// DELETE /api/user/me - Delete user account and all associated data
+router.delete("/me", async (req, res) => {
+    try {
+        const currentUser = await getCurrentUser(req);
+        if (!currentUser) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        // Delete user — cascade will handle workspaces, messages, files, todos, invoices, notifications
+        await prisma.user.delete({
+            where: { id: currentUser.userId },
+        });
+
+        // Clear auth cookies
+        const isProductionEnv = process.env.NODE_ENV === "production";
+        res.clearCookie("auth_token", {
+            httpOnly: true,
+            secure: isProductionEnv,
+            sameSite: isProductionEnv ? "strict" : "lax",
+            path: "/",
+        });
+        res.clearCookie("refresh_token", {
+            httpOnly: true,
+            secure: isProductionEnv,
+            sameSite: isProductionEnv ? "strict" : "lax",
+            path: "/api/auth/refresh",
+        });
+
+        return res.json({ message: "Account deleted successfully" });
+    } catch (error) {
+        console.error("Delete account error:", error);
         return res.status(500).json({ error: "Internal server error" });
     }
 });
