@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { useEmailNotifications } from "@/hooks/use-email-notifications";
