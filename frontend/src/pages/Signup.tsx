@@ -16,7 +16,7 @@ import { setUserCountry } from "@/utils/countryDetection";
 const signupSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
   email: z.string().email({ message: "Please enter a valid email" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  password: z.string().min(8, { message: "Password must be at least 8 characters" }),
   country: z.enum(['india', 'foreign'], {
     required_error: "Please select your country"
   }),
@@ -83,14 +83,8 @@ const Signup: React.FC = () => {
 
       toast.success("Your account has been created successfully");
 
-      // Keep the selected plan info in sessionStorage
-      // It will be used after they are authenticated
-
-      // The signup function already navigates to dashboard, but if there's a plan selected
-      // redirect to pricing settings
-      if (selectedPlanId) {
-        setTimeout(() => navigate("/settings/pricing"), 100);
-      }
+      // Redirect to email verification prompt
+      navigate("/verify-email-prompt");
     } catch (error: any) {
       console.error("Signup error:", error);
 
@@ -173,7 +167,7 @@ const Signup: React.FC = () => {
                       <Input type="password" placeholder="••••••••" {...field} />
                     </FormControl>
                     <FormDescription>
-                      Must be at least 6 characters
+                      Must be at least 8 characters
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -241,11 +235,11 @@ const Signup: React.FC = () => {
         <div className="text-center mt-6 text-sm text-gray-500">
           <p>
             By creating an account, you agree to our{" "}
-            <Link to="/terms" className="text-primary hover:underline">
+            <Link to="/disclaimer" className="text-primary hover:underline">
               Terms of Service
             </Link>{" "}
             and{" "}
-            <Link to="/privacy" className="text-primary hover:underline">
+            <Link to="/privacy-policy" className="text-primary hover:underline">
               Privacy Policy
             </Link>
           </p>
