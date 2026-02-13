@@ -1,5 +1,6 @@
 import { Server as SocketIOServer } from "socket.io";
 import { prisma } from "./prisma.js";
+import { verifyToken } from "./auth.js";
 
 let io = null;
 
@@ -19,21 +20,65 @@ export function initializeSocketServer(httpServer) {
         },
     });
 
+    // Authentication middleware — verify JWT from cookie before connection
+    io.use((socket, next) => {
+        try {
+            const cookies = socket.handshake.headers.cookie;
+            if (!cookies) {
+                return next(new Error("Authentication required"));
+            }
+
+            // Parse cookies manually (cookie-parser is Express middleware, not available here)
+            const parsed = {};
+            cookies.split(";").forEach((c) => {
+                const [key, ...val] = c.trim().split("=");
+                if (key) parsed[key.trim()] = val.join("=").trim();
+            });
+
+            const token = parsed["auth_token"];
+            if (!token) {
+                return next(new Error("Authentication required"));
+            }
+
+            const decoded = verifyToken(token);
+            if (!decoded) {
+                return next(new Error("Invalid or expired token"));
+            }
+
+            // Attach user info to socket
+            socket.userId = decoded.userId;
+            socket.userEmail = decoded.email;
+            next();
+        } catch (error) {
+            console.error("[Socket] Auth error:", error.message);
+            next(new Error("Authentication failed"));
+        }
+    });
+
     io.on("connection", (socket) => {
-        console.log("✓ New socket connected:", socket.id);
+        console.log(`✓ Socket connected: ${socket.id} (user: ${socket.userId})`);
 
-        // Join user's personal notification room
-        socket.on("join-user-room", (userId) => {
-            const userRoom = `user:${userId}`;
-            socket.join(userRoom);
-            console.log(`[Socket] Socket ${socket.id} joined user room: ${userRoom}`);
-            console.log(`[Socket] Socket ${socket.id} is now in rooms:`, Array.from(socket.rooms));
-        });
+        // Automatically join user's personal notification room
+        const userRoom = `user:${socket.userId}`;
+        socket.join(userRoom);
+        console.log(`[Socket] Socket ${socket.id} auto-joined room: ${userRoom}`);
 
-        // Join workspace room
-        socket.on("join-workspace", (workspaceId) => {
-            socket.join(`workspace:${workspaceId}`);
-            console.log(`Socket ${socket.id} joined workspace:${workspaceId}`);
+        // Join workspace room (verify ownership)
+        socket.on("join-workspace", async (workspaceId) => {
+            try {
+                // Verify the user owns this workspace
+                const workspace = await prisma.workspace.findFirst({
+                    where: { id: workspaceId, userId: socket.userId },
+                });
+                if (!workspace) {
+                    console.warn(`[Socket] User ${socket.userId} denied access to workspace ${workspaceId}`);
+                    return;
+                }
+                socket.join(`workspace:${workspaceId}`);
+                console.log(`Socket ${socket.id} joined workspace:${workspaceId}`);
+            } catch (error) {
+                console.error("[Socket] Join workspace error:", error);
+            }
         });
 
         // Leave workspace room
@@ -156,12 +201,12 @@ export function initializeSocketServer(httpServer) {
                     });
 
                     console.log("[Socket] Created notification for user:", workspace.userId, notification);
-                    
+
                     // Debug: Check which sockets are in the user room
                     const userRoom = `user:${workspace.userId}`;
                     const socketsInRoom = await io?.in(userRoom).allSockets();
                     console.log(`[Socket] Sockets in room ${userRoom}:`, socketsInRoom ? Array.from(socketsInRoom) : 'none');
-                    
+
                     io?.to(userRoom).emit("notification", notification);
                     console.log("[Socket] Emitted notification to user room:", userRoom);
                 }
@@ -275,7 +320,7 @@ export function initializeSocketServer(httpServer) {
 
                 // Only send notification to client if invoice is not a draft
                 const isDraft = data.invoice.status?.toLowerCase() === 'draft';
-                
+
                 if (!isDraft) {
                     // Freelancer → Client notification
                     const notification = {
