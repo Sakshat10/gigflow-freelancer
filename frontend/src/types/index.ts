@@ -8,6 +8,8 @@ export interface User {
   storageUsed?: number;
   storageLimit?: number;
   paypalMeUsername?: string;
+  createdAt?: string;
+  emailVerified?: boolean;
 }
 
 export interface Workspace {
@@ -28,7 +30,7 @@ export interface Invoice {
   id: string;
   clientName: string;
   amount: number;
-  status: "Paid" | "Pending" | "Overdue";
+  status: "Paid" | "Pending" | "Overdue" | "Draft";
   date: string;
   dueDate: string;
   description?: string;
