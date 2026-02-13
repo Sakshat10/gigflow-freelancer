@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Workspace } from "@/types";
 import { Loader2, Check } from "lucide-react";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
 import { createWorkspace } from "@/services/workspace";
 
 interface CreateWorkspaceFormProps {
