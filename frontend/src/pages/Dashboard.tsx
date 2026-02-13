@@ -226,7 +226,7 @@ const Dashboard: React.FC = () => {
                           className="rounded-full px-4 flex-1 sm:flex-none"
                           variant="outline"
                           onClick={() => {
-                            toast.info("Client Updates is a Pro Plus feature. Upgrade to unlock!", {
+                            toast("Client Updates is a Pro Plus feature. Upgrade to unlock!", {
                               duration: 4000,
                             });
                           }}
@@ -271,11 +271,29 @@ const Dashboard: React.FC = () => {
             </FadeIn>
 
             {loading ? (
-              <FadeIn>
-                <div className="bg-white rounded-2xl p-8 text-center shadow-sm border border-gray-100">
-                  <p>Loading workspaces...</p>
-                </div>
-              </FadeIn>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3].map((i) => (
+                  <FadeIn key={i} delay={(i * 100).toString() as any}>
+                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 animate-pulse">
+                      <div className="flex items-center space-x-3 mb-4">
+                        <div className="w-10 h-10 rounded-full bg-gray-200" />
+                        <div className="space-y-2 flex-1">
+                          <div className="h-4 bg-gray-200 rounded w-3/4" />
+                          <div className="h-3 bg-gray-100 rounded w-1/2" />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="h-3 bg-gray-100 rounded w-full" />
+                        <div className="h-3 bg-gray-100 rounded w-2/3" />
+                      </div>
+                      <div className="flex justify-between mt-4 pt-4 border-t border-gray-50">
+                        <div className="h-3 bg-gray-100 rounded w-20" />
+                        <div className="h-3 bg-gray-100 rounded w-16" />
+                      </div>
+                    </div>
+                  </FadeIn>
+                ))}
+              </div>
             ) : filteredWorkspaces.length > 0 ? (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredWorkspaces.map((workspace, index) => (
@@ -352,7 +370,7 @@ const Dashboard: React.FC = () => {
                   <div className="flex items-center space-x-3">
                     <Calendar className="h-4 w-4 text-gray-400" />
                     <span className="text-sm text-gray-600">
-                      Member since today
+                      Member since {user?.createdAt ? new Date(user.createdAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : "recently"}
                     </span>
                   </div>
                   <Button
