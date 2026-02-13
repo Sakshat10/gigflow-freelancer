@@ -14,7 +14,7 @@ import {
 import { format } from "date-fns";
 import { Thing } from "@/types";
 import { createTask } from "@/services/taskService";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
 import { 
   Select, 
   SelectContent, 
