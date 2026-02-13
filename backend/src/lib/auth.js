@@ -1,7 +1,14 @@
 import jwt from "jsonwebtoken";
 import argon2 from "argon2";
 
-const JWT_SECRET = process.env.JWT_SECRET || "fallback-secret-key";
+// Fail-fast in production if secrets are missing
+const isProduction = process.env.NODE_ENV === "production";
+if (isProduction && !process.env.JWT_SECRET) {
+    throw new Error("FATAL: JWT_SECRET must be set in production environment");
+}
+
+const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET || "fallback-secret-key";
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || (process.env.JWT_SECRET ? process.env.JWT_SECRET + "-refresh" : "fallback-refresh-key");
 const COOKIE_NAME = "auth_token";
 const REFRESH_COOKIE_NAME = "refresh_token";
 
@@ -29,22 +36,34 @@ export async function verifyPassword(password, hash) {
 
 // Generate JWT access token (7 days)
 export function generateToken(payload) {
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
+    return jwt.sign(payload, JWT_ACCESS_SECRET, { expiresIn: "7d" });
 }
 
 // Generate JWT refresh token (30 days)
 export function generateRefreshToken(payload) {
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: "30d" });
+    return jwt.sign(payload, JWT_REFRESH_SECRET, { expiresIn: "30d" });
 }
 
-// Verify JWT token
+// Verify JWT access token
 export function verifyToken(token) {
     try {
         // Check if token is blacklisted
         if (tokenBlacklist.has(token)) {
             return null;
         }
-        return jwt.verify(token, JWT_SECRET);
+        return jwt.verify(token, JWT_ACCESS_SECRET);
+    } catch {
+        return null;
+    }
+}
+
+// Verify JWT refresh token
+export function verifyRefreshToken(token) {
+    try {
+        if (tokenBlacklist.has(token)) {
+            return null;
+        }
+        return jwt.verify(token, JWT_REFRESH_SECRET);
     } catch {
         return null;
     }
@@ -116,7 +135,7 @@ export async function getCurrentUser(req) {
 export function getRefreshToken(req) {
     const token = req.cookies?.[REFRESH_COOKIE_NAME];
     if (!token) return null;
-    return verifyToken(token);
+    return verifyRefreshToken(token);
 }
 
 // Auth middleware helper
