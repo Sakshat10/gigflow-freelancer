@@ -29,7 +29,7 @@ import {
 import { Workspace as WorkspaceType } from "@/types";
 import { fetchWorkspace } from "@/services/workspace";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
 import { hasFeatureAccess, canSendInvoices } from "@/utils/planFeatures";
 import { Input } from "@/components/ui/input";
 import CreateWorkspaceForm from "@/components/workspace/CreateWorkspaceForm";
@@ -1132,7 +1132,7 @@ const Workspace: React.FC = () => {
                             className="rounded-full" 
                             onClick={() => {
                               navigate("/settings?tab=pricing");
-                              toast.info("Upgrade to Pro to create unlimited invoices");
+                              toast("Upgrade to Pro to create unlimited invoices");
                             }}
                           >
                             <Lock className="h-4 w-4 mr-2" />
@@ -1227,7 +1227,7 @@ const Workspace: React.FC = () => {
                                     className="flex items-center gap-2 cursor-pointer text-primary"
                                     onClick={() => {
                                       navigate("/settings?tab=pricing");
-                                      toast.info("Upgrade to Pro to send invoices to clients");
+                                      toast("Upgrade to Pro to send invoices to clients");
                                     }}
                                   >
                                     <Lock className="h-4 w-4" />
