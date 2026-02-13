@@ -643,9 +643,14 @@ router.post("/:id/invoices", async (req, res) => {
 
         // Determine invoice status based on user plan
         // Free users can only create draft invoices
-        const userPlan = (user.plan || 'free').toLowerCase().replace(/\s+/g, '_');
+        const userPlan = (user.plan || 'free').toLowerCase().trim().replace(/\s+/g, '_');
         const canSendInvoice = userPlan === 'pro' || userPlan === 'pro_plus';
         const invoiceStatus = canSendInvoice ? "Pending" : "draft";
+
+        console.log('[Invoice Creation] Raw user plan:', user.plan);
+        console.log('[Invoice Creation] Normalized plan:', userPlan);
+        console.log('[Invoice Creation] Can send invoice:', canSendInvoice);
+        console.log('[Invoice Creation] Invoice status will be:', invoiceStatus);
 
         // Check invoice limit for free tier users
         if (userPlan === 'free') {
