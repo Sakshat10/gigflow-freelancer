@@ -1,15 +1,17 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FadeIn } from "@/components/animations/FadeIn";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
 import { updatePassword } from "@/services/userService";
 import { Eye, EyeOff } from "lucide-react";
 
 const SecuritySettings: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -24,8 +26,8 @@ const SecuritySettings: React.FC = () => {
       return;
     }
 
-    if (newPassword.length < 6) {
-      toast.error("Password must be at least 6 characters long");
+    if (newPassword.length < 8) {
+      toast.error("Password must be at least 8 characters long");
       return;
     }
 
@@ -38,10 +40,12 @@ const SecuritySettings: React.FC = () => {
     try {
       await updatePassword(currentPassword, newPassword);
 
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      toast.success("Password updated successfully");
+      toast.success("Password updated! Please log in again.");
+
+      // Force full logout — clears React state, localStorage, and redirects
+      setTimeout(() => {
+        logout();
+      }, 1500);
 
     } catch (error: any) {
       console.error("Error updating password:", error);
