@@ -77,10 +77,14 @@ const rateLimitHandler = (req, res) => {
     });
 };
 
-// Global rate limiter - 100 requests per 15 minutes per IP
+// ⚠️ PRODUCTION NOTE: For multi-instance deployments, replace the default
+// in-memory store with Redis: npm install rate-limit-redis
+// Example: store: new RedisStore({ sendCommand: (...args) => redisClient.sendCommand(args) })
+
+// Global rate limiter - 300 requests per 15 minutes per IP
 export const globalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100,
+    max: 300,
     message: 'Too many requests from this IP, please try again later.',
     standardHeaders: true,
     legacyHeaders: false,
@@ -175,3 +179,13 @@ export const attachUserToRequest = async (req, res, next) => {
     }
     next();
 };
+
+// Client share-token route limiter - 60 requests per 15 minutes per IP
+export const clientRouteLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 60,
+    message: 'Too many requests. Please try again later.',
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler: rateLimitHandler
+});
