@@ -12,7 +12,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
 import {
   Share2,
   FileText,
@@ -507,6 +507,14 @@ const SharedWorkspaceView: React.FC = () => {
     // Listen for invoice created
     const handleInvoiceCreated = (data: any) => {
       console.log('[SharedWorkspace] Invoice created event received:', data);
+      
+      // Only show non-draft invoices to clients
+      const isDraft = data.invoice.status?.toLowerCase() === 'draft';
+      if (isDraft) {
+        console.log('[SharedWorkspace] Skipping draft invoice display for client');
+        return;
+      }
+      
       setWorkspace(prev => {
         if (!prev) return prev;
         // Avoid duplicates
