@@ -73,6 +73,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 email: data.user.email,
                 plan: data.user.plan,
                 company: storedUser.company || "",
+                createdAt: data.user.createdAt,
+                emailVerified: data.user.emailVerified,
               };
               setUser(userData);
               setIsAuthenticated(true);
@@ -121,12 +123,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: data.user.email,
         plan: data.user.plan,
         company: "",
+        createdAt: data.user.createdAt,
+        emailVerified: data.user.emailVerified,
       };
 
       setUser(userData);
       setIsAuthenticated(true);
       storeUser(userData);
-      navigate("/dashboard");
+
+      // If email not verified, redirect to verification prompt
+      if (!data.user.emailVerified) {
+        navigate("/verify-email-prompt");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (error: any) {
       console.error("Login error:", error);
       throw error;
@@ -156,12 +166,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: data.user.email,
         plan: data.user.plan,
         company: company || "",
+        createdAt: data.user.createdAt,
+        emailVerified: data.user.emailVerified,
       };
 
       setUser(userData);
       setIsAuthenticated(true);
       storeUser(userData);
-      navigate("/dashboard");
+      // Don't navigate here — let Signup.tsx handle the redirect
 
       return { user: userData, error: null };
     } catch (error: any) {
@@ -191,9 +203,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateUserProfile = async (data: UserUpdateData) => {
     if (!user) return;
 
-    const updatedUser = { ...user, ...data };
-    setUser(updatedUser);
-    storeUser(updatedUser);
+    try {
+      const response = await fetch(`${API_URL}/api/user/me`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update profile");
+      }
+
+      const responseData = await response.json();
+      const updatedUser = { ...user, ...responseData.user };
+      setUser(updatedUser);
+      storeUser(updatedUser);
+      toast.success("Profile updated successfully");
+    } catch (error: any) {
+      console.error("Update profile error:", error);
+      toast.error(error.message || "Failed to update profile");
+      throw error;
+    }
   };
 
   const upgradePlan = async (plan: "free" | "pro" | "pro_plus", subscriptionId?: string) => {
@@ -202,7 +236,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       // Call the backend API to persist the plan change
       const response = await fetch(`${API_URL}/api/user/plan`, {
-        method: "POST",
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
@@ -230,14 +264,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const deleteAccount = async () => {
-    await logout();
-    toast.success("Account deleted successfully");
+    try {
+      const response = await fetch(`${API_URL}/api/user/me`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to delete account");
+      }
+
+      setUser(null);
+      setIsAuthenticated(false);
+      storeUser(null);
+      toast.success("Account deleted successfully");
+      navigate("/");
+    } catch (error: any) {
+      console.error("Delete account error:", error);
+      toast.error(error.message || "Failed to delete account");
+    }
   };
 
   const resetPassword = async (email: string) => {
-    // Mock password reset
-    console.log('Reset password for:', email);
-    toast.success("Password reset email sent");
+    try {
+      const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to send reset email");
+      }
+
+      toast.success("Password reset email sent. Check your inbox.");
+    } catch (error: any) {
+      console.error("Reset password error:", error);
+      toast.error(error.message || "Failed to send reset email");
+    }
   };
 
   const refreshUserData = async () => {
