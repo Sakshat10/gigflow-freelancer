@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Check, CreditCard, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 
 const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID || "";
@@ -74,14 +74,14 @@ const PricingSettings: React.FC = () => {
 
   const handlePlanSelect = async (planId: string) => {
     if (user?.plan === planId) {
-      toast.info("You are already on this plan");
+      toast("You are already on this plan");
       return;
     }
 
     if (planId === "free") {
       await upgradePlan("free");
     } else {
-      toast.info("Payment integration will be available once the backend is connected");
+      toast("Payment integration will be available once the backend is connected");
     }
   };
 
@@ -139,16 +139,17 @@ const PricingSettings: React.FC = () => {
                         </li>
                       ))}
                     </ul>
-                    
+
                     {/* Show PayPal button for Pro plan only if user is on free */}
                     {plan.id === "pro" && user?.plan === "free" ? (
                       <div id="paypal-button-container-P-84G532022D7433127NFYGD3Q">
                         <PayPalButtons
+                          fundingSource="paypal"
                           style={{
                             shape: "rect",
                             color: "silver",
                             layout: "vertical",
-                            label: "subscribe",
+                            label: "pay",
                           }}
                           createSubscription={(data, actions) => {
                             return actions.subscription.create({
@@ -169,11 +170,12 @@ const PricingSettings: React.FC = () => {
                     ) : plan.id === "pro_plus" && user?.plan !== "pro_plus" ? (
                       <div id="paypal-button-container-P-5LM84565Y6426231ENFYHCCQ">
                         <PayPalButtons
+                          fundingSource="paypal"
                           style={{
                             shape: "rect",
                             color: "silver",
                             layout: "vertical",
-                            label: "subscribe",
+                            label: "pay",
                           }}
                           createSubscription={(data, actions) => {
                             return actions.subscription.create({
