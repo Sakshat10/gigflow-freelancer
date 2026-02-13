@@ -4,7 +4,7 @@ import React, { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Upload, Trash2 } from "lucide-react";
 import { useDropzone } from "react-dropzone";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
 import {
   AlertDialog,
   AlertDialogAction,
