@@ -16,9 +16,11 @@ model User {
   password         String
   name             String
   company          String?
-  plan             String  @default("free")
-  paypalMeUsername String?
-  invoiceCounter   Int     @default(0)
+  plan               String  @default("free")
+  subscriptionId     String?
+  subscriptionStatus String? // "active" | "cancelled" | "suspended"
+  paypalMeUsername   String?
+  invoiceCounter     Int     @default(0)
 
   // Email verification
   emailVerified          Boolean @default(false)
@@ -31,6 +33,10 @@ model User {
   loginAttempts    Int       @default(0)
   lastLoginAttempt DateTime?
   blockedUntil     DateTime?
+
+  // Password reset
+  passwordResetToken   String? @unique
+  passwordResetExpires DateTime?
 
   createdAt DateTime @default(now())
 
