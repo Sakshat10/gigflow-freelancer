@@ -1,5 +1,4 @@
 import validator from 'validator';
-import mongoSanitize from 'express-mongo-sanitize';
 
 // HTML escape function
 const escapeHtml = (text) => {
@@ -154,9 +153,6 @@ export const sanitizeNumber = (value, options = {}) => {
 
 // Middleware to sanitize request body
 export const sanitizeBody = (req, res, next) => {
-    // Use express-mongo-sanitize to prevent NoSQL injection
-    req.body = mongoSanitize.sanitize(req.body);
-
     // Sanitize common text fields
     if (req.body.name) {
         req.body.name = sanitizeText(req.body.name, { stripScripts: true, maxLength: 100 });
