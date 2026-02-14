@@ -14,19 +14,19 @@ const Footer: React.FC = () => {
               Streamlining collaboration between freelancers and clients.
             </p>
             <div className="flex space-x-4">
-              <a 
-                href="https://www.linkedin.com/in/sakshatkumar/" 
-                target="_blank" 
-                rel="noopener noreferrer" 
+              <a
+                href="https://www.linkedin.com/in/sakshatkumar/"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-gray-400 hover:text-gray-500 transition-colors"
               >
                 <span className="sr-only">LinkedIn</span>
                 <Linkedin className="h-6 w-6" />
               </a>
-              <a 
-                href="https://github.com/Sakshat10" 
-                target="_blank" 
-                rel="noopener noreferrer" 
+              <a
+                href="https://github.com/Sakshat10"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-gray-400 hover:text-gray-500 transition-colors"
               >
                 <span className="sr-only">GitHub</span>
@@ -34,7 +34,7 @@ const Footer: React.FC = () => {
               </a>
             </div>
           </div>
-          
+
           <div>
             <h4 className="font-medium mb-4">Company</h4>
             <ul className="space-y-3">
@@ -50,13 +50,9 @@ const Footer: React.FC = () => {
                 <HelpCircle className="h-4 w-4 text-gray-400 mr-2" />
                 <Link to="/faq" className="text-gray-500 hover:text-gray-800 transition-colors link-underline">FAQ</Link>
               </li>
-              <li className="flex items-center">
-                <FileText className="h-4 w-4 text-gray-400 mr-2" />
-                <Link to="/blog" className="text-gray-500 hover:text-gray-800 transition-colors link-underline">Blog</Link>
-              </li>
             </ul>
           </div>
-          
+
           <div>
             <h4 className="font-medium mb-4">Legal</h4>
             <ul className="space-y-3">
@@ -79,7 +75,7 @@ const Footer: React.FC = () => {
             </ul>
           </div>
         </div>
-        
+
         <div className="mt-8 pt-8 border-t border-gray-100 text-center text-gray-500 text-sm space-y-2">
           <p className="text-gray-600">Built for freelancers. No contracts. Cancel anytime.</p>
           <p>© {new Date().getFullYear()} GigFlow. All rights reserved.</p>
