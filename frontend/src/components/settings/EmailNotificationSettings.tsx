@@ -27,7 +27,7 @@ const EmailNotificationSettings: React.FC<EmailNotificationSettingsProps> = ({ c
       user.email,
       "Test Workspace",
       "new-message",
-      { messagePreview: "This is a test notification email from GigFlow." }
+      { messagePreview: "This is a test notification email from ClientDocks." }
     );
     
     if (success) {
@@ -40,7 +40,7 @@ const EmailNotificationSettings: React.FC<EmailNotificationSettingsProps> = ({ c
       <div>
         <h3 className="text-lg font-medium">Email Notifications</h3>
         <p className="text-sm text-muted-foreground">
-          Configure when you receive email notifications from GigFlow
+          Configure when you receive email notifications from ClientDocks
         </p>
       </div>
       
