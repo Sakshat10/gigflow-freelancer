@@ -32,12 +32,12 @@ const Contact: React.FC = () => {
                   <h3 className="text-lg font-semibold">Email Us</h3>
                 </div>
                 <p className="text-gray-600 mb-2">General Inquiries:</p>
-                <a href="mailto:info@gigflow.com" className="text-blue-600 hover:underline block mb-3">
-                  info@gigflow.com
+                <a href="mailto:info@clientdocks.com" className="text-blue-600 hover:underline block mb-3">
+                  info@clientdocks.com
                 </a>
                 <p className="text-gray-600 mb-2">Support:</p>
-                <a href="mailto:support@gigflow.com" className="text-blue-600 hover:underline block">
-                  support@gigflow.com
+                <a href="mailto:support@clientdocks.com" className="text-blue-600 hover:underline block">
+                  support@clientdocks.com
                 </a>
               </Card>
             </FadeIn>
