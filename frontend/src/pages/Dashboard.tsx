@@ -55,20 +55,15 @@ const Dashboard: React.FC = () => {
 
   // Start tour for first-time users
   useEffect(() => {
-    // Check localStorage directly to ensure we have the latest values
     const hasCompletedTour = localStorage.getItem('tour_completed_dashboard') === 'true';
     const isFirstTime = localStorage.getItem('first_time_user') === 'true';
 
-    // Check session flag to prevent double trigger in same mount
-    const hasTriggeredThisSession = sessionStorage.getItem('dashboard_tour_triggered') === 'true';
-
-    if (isFirstTime && !hasCompletedTour && !loading && !dialogOpen && !hasTriggeredThisSession) {
-      sessionStorage.setItem('dashboard_tour_triggered', 'true');
+    if (isFirstTime && !hasCompletedTour && !loading && !dialogOpen) {
       const timer = setTimeout(() => {
         const steps: TourStep[] = [
           {
             element: '#dashboard-header',
-            title: '👋 Welcome to GigFlow!',
+            title: '👋 Welcome to ClientDocks!',
             intro: 'This is your dashboard where you manage all your client workspaces.',
             position: 'bottom',
           },
@@ -81,7 +76,7 @@ const Dashboard: React.FC = () => {
           {
             element: '#email-clients-btn',
             title: '📧 Email Clients',
-            intro: 'Send professional emails to your clients directly from GigFlow.',
+            intro: 'Send professional emails to your clients directly from ClientDocks.',
             position: 'bottom',
           },
           {
