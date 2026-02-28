@@ -10,7 +10,7 @@ const AppearanceSettings: React.FC = () => {
         <div className="p-6 space-y-6">
           <h2 className="text-xl font-semibold mb-4">Appearance Settings</h2>
           <p className="text-gray-600 mb-6">
-            Customize how GigFlow looks for you.
+            Customize how ClientDocks looks for you.
           </p>
           
           <div className="space-y-4">

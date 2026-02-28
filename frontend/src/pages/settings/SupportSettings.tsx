@@ -11,7 +11,7 @@ const SupportSettings: React.FC = () => {
         <div className="p-6 space-y-6">
           <h2 className="text-xl font-semibold mb-4">Help & Support</h2>
           <p className="text-gray-600 mb-6">
-            Get help with using GigFlow or contact our support team.
+            Get help with using ClientDocks or contact our support team.
           </p>
           
           <div className="space-y-6">
@@ -83,15 +83,15 @@ const SupportSettings: React.FC = () => {
                   </p>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="font-medium mb-1">Are contracts and documents generated on GigFlow legally binding?</h4>
+                  <h4 className="font-medium mb-1">Are contracts and documents generated on ClientDocks legally binding?</h4>
                   <p className="text-gray-600 text-sm">
-                    Documents generated on GigFlow are AI-assisted drafts created for reference purposes only. They are not a substitute for legal advice. Users should review all documents carefully and consult a qualified legal professional before signing or sharing them.
+                    Documents generated on ClientDocks are AI-assisted drafts created for reference purposes only. They are not a substitute for legal advice. Users should review all documents carefully and consult a qualified legal professional before signing or sharing them.
                   </p>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-4">
                   <h4 className="font-medium mb-1">How does AI help with document creation?</h4>
                   <p className="text-gray-600 text-sm">
-                    GigFlow uses AI to help structure documents and improve clarity based on the details you provide. The AI assists with formatting and language, but you remain responsible for reviewing and approving the final content.
+                    ClientDocks uses AI to help structure documents and improve clarity based on the details you provide. The AI assists with formatting and language, but you remain responsible for reviewing and approving the final content.
                   </p>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-4">
@@ -101,15 +101,15 @@ const SupportSettings: React.FC = () => {
                   </p>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="font-medium mb-1">Which document types can I generate on GigFlow?</h4>
+                  <h4 className="font-medium mb-1">Which document types can I generate on ClientDocks?</h4>
                   <p className="text-gray-600 text-sm">
                     You can generate the following AI-assisted documents: Service Agreements (Contracts), Non-Disclosure Agreements (NDAs), Statements of Work (SOWs), and Project Proposals. Availability may vary by plan.
                   </p>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="font-medium mb-1">Does GigFlow sign or send documents automatically?</h4>
+                  <h4 className="font-medium mb-1">Does ClientDocks sign or send documents automatically?</h4>
                   <p className="text-gray-600 text-sm">
-                    No. GigFlow does not automatically sign, send, or enforce documents. All documents remain drafts until you choose how to use or share them.
+                    No. ClientDocks does not automatically sign, send, or enforce documents. All documents remain drafts until you choose how to use or share them.
                   </p>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-4">
@@ -119,9 +119,9 @@ const SupportSettings: React.FC = () => {
                   </p>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="font-medium mb-1">Should I use GigFlow documents for important legal agreements?</h4>
+                  <h4 className="font-medium mb-1">Should I use ClientDocks documents for important legal agreements?</h4>
                   <p className="text-gray-600 text-sm">
-                    GigFlow documents are best used as starting drafts. For important or high-value agreements, we strongly recommend consulting a legal professional before finalizing.
+                    ClientDocks documents are best used as starting drafts. For important or high-value agreements, we strongly recommend consulting a legal professional before finalizing.
                   </p>
                 </div>
               </div>

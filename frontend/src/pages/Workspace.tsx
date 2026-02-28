@@ -171,17 +171,17 @@ const Workspace: React.FC = () => {
       for (const file of Array.from(files)) {
         console.log('Uploading file:', file.name, 'Type:', file.type, 'Size:', file.size);
         const uploadedFile = await uploadFile(id, file);
-        
+
         if (uploadedFile) {
           // Ensure the uploaded file has all required fields
           const fileWithDefaults = {
             ...uploadedFile,
             comments: uploadedFile.comments || []
           };
-          
+
           setUploadedFiles(prev => [fileWithDefaults, ...prev]);
           toast.success(`${file.name} uploaded successfully`);
-          
+
           // Emit socket event for real-time sync
           emitFileUploaded({
             workspaceId: id,
@@ -204,7 +204,7 @@ const Workspace: React.FC = () => {
     if (!newFileComment.trim() || !id) return;
 
     const comment = await addFileComment(id, fileId, newFileComment.trim());
-    
+
     if (comment) {
       setUploadedFiles(prev => prev.map(file => {
         if (file.id === fileId) {
@@ -216,7 +216,7 @@ const Workspace: React.FC = () => {
         return file;
       }));
       setNewFileComment('');
-      
+
       // Emit socket event for real-time sync
       emitFileCommentAdded({
         workspaceId: id,
@@ -259,7 +259,7 @@ const Workspace: React.FC = () => {
     if (success) {
       setUploadedFiles(prev => prev.filter(f => f.id !== fileToDelete.id));
       toast.success('File deleted');
-      
+
       // Emit socket event for real-time sync
       emitFileDeleted({
         workspaceId: id,
@@ -268,7 +268,7 @@ const Workspace: React.FC = () => {
     } else {
       toast.error('Failed to delete file');
     }
-    
+
     setIsDeleteDialogOpen(false);
     setFileToDelete(null);
   };
@@ -287,7 +287,7 @@ const Workspace: React.FC = () => {
     if (success) {
       setInvoices(prev => prev.filter(inv => inv.id !== invoiceToDelete.id));
       toast.success("Invoice deleted");
-      
+
       // Emit socket event for real-time sync
       emitInvoiceDeleted({
         workspaceId: id,
@@ -296,7 +296,7 @@ const Workspace: React.FC = () => {
     } else {
       toast.error("Failed to delete invoice");
     }
-    
+
     setIsInvoiceDeleteDialogOpen(false);
     setInvoiceToDelete(null);
   };
@@ -304,7 +304,7 @@ const Workspace: React.FC = () => {
   // Handle document save
   const handleDocumentSaved = (document: SavedDocument) => {
     if (!id) return;
-    
+
     const updatedDocs = [...savedDocuments, document];
     setSavedDocuments(updatedDocs);
     localStorage.setItem(`documents_${id}`, JSON.stringify(updatedDocs));
@@ -317,7 +317,7 @@ const Workspace: React.FC = () => {
 
   const confirmDeleteDocument = () => {
     if (!id || !documentToDelete) return;
-    
+
     const updatedDocs = savedDocuments.filter(doc => doc.id !== documentToDelete);
     setSavedDocuments(updatedDocs);
     localStorage.setItem(`documents_${id}`, JSON.stringify(updatedDocs));
@@ -372,27 +372,27 @@ const Workspace: React.FC = () => {
   // Get file icon based on filename extension
   const getFileIcon = (filename: string) => {
     const extension = filename.toLowerCase().split('.').pop() || '';
-    
+
     // Image files
     if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension)) {
       return <Image className="h-5 w-5 text-blue-500" />;
     }
-    
+
     // Video files
     if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm'].includes(extension)) {
       return <FileVideo className="h-5 w-5 text-purple-500" />;
     }
-    
+
     // Audio files
     if (['mp3', 'wav', 'flac', 'aac', 'ogg'].includes(extension)) {
       return <FileAudio className="h-5 w-5 text-green-500" />;
     }
-    
+
     // Document files
     if (['pdf', 'doc', 'docx', 'txt', 'rtf'].includes(extension)) {
       return <FileText className="h-5 w-5 text-red-500" />;
     }
-    
+
     // Default file icon
     return <File className="h-5 w-5 text-gray-500" />;
   };
@@ -430,7 +430,7 @@ const Workspace: React.FC = () => {
         setTasks(taskData);
         setMessages(msgData);
         setUploadedFiles(filesData);
-        
+
         // Load saved documents from localStorage
         const storedDocs = localStorage.getItem(`documents_${id}`);
         if (storedDocs) {
@@ -528,7 +528,7 @@ const Workspace: React.FC = () => {
     // Listen for task status updated
     const handleTaskStatusUpdated = (data: any) => {
       console.log('[Workspace] Task status updated event received:', data);
-      setTasks(prev => prev.map(t => 
+      setTasks(prev => prev.map(t =>
         t.id === data.task.id ? data.task : t
       ));
     };
@@ -606,11 +606,7 @@ const Workspace: React.FC = () => {
     const hasCompletedTour = localStorage.getItem(tourKey) === 'true';
     const isFirstWs = localStorage.getItem('first_workspace_created') !== 'true';
 
-    // Check session flag
-    const hasTriggeredThisSession = sessionStorage.getItem(`workspace_tour_triggered_${id}`) === 'true';
-
-    if (!loading && workspace && (shouldShowTour || isFirstWs) && !hasCompletedTour && !hasTriggeredThisSession) {
-      sessionStorage.setItem(`workspace_tour_triggered_${id}`, 'true');
+    if (!loading && workspace && (shouldShowTour || isFirstWs) && !hasCompletedTour) {
       const timer = setTimeout(() => {
         const steps: TourStep[] = [
           {
@@ -840,168 +836,168 @@ const Workspace: React.FC = () => {
                 <CardContent>
                   <ErrorBoundary fallback={<div className="p-4 text-red-600">Error loading files</div>}>
                     {uploadedFiles.length === 0 ? (
-                    <div
-                      className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all cursor-pointer ${isDragging ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-primary/50'}`}
-                      onDragOver={handleDragOver}
-                      onDragLeave={handleDragLeave}
-                      onDrop={handleDrop}
-                      onClick={() => setIsUploadDialogOpen(true)}
-                    >
-                      <Upload className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                      <p className="text-gray-600 font-medium">Drop files here or click to upload</p>
-                      <p className="text-sm text-gray-400 mt-1">
-                        Supported formats: Images, PDFs, Documents, Videos
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {uploadedFiles.map((file) => {
-                        try {
-                          return (
-                            <div
-                              key={file.id}
-                              className="rounded-xl border border-gray-100 overflow-hidden transition-all"
-                            >
-                              {/* File Header */}
-                              <div className="flex items-center justify-between p-4 hover:bg-primary/5 group">
-                                <div className="flex items-center gap-3">
-                                  <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
-                                    {getFileIcon(file.filename)}
-                                  </div>
-                                  <div>
-                                    <p className="font-medium text-sm">{file.filename}</p>
-                                    <p className="text-xs text-gray-500">
-                                      {formatFileSize(file.size)} • {new Date(file.createdAt).toLocaleDateString()}
-                                    </p>
-                                  </div>
-                                </div>
-                            <div className="flex items-center gap-2">
-                              {/* Comments toggle button */}
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="rounded-full text-gray-500 hover:text-primary"
-                                onClick={() => setExpandedFileId(expandedFileId === file.id ? null : file.id)}
-                              >
-                                <MessageCircle className="h-4 w-4 mr-1" />
-                                <span className="text-xs">{file.comments?.length || 0}</span>
-                                {expandedFileId === file.id ? (
-                                  <ChevronUp className="h-3 w-3 ml-1" />
-                                ) : (
-                                  <ChevronDown className="h-3 w-3 ml-1" />
-                                )}
-                              </Button>
-                              {isPreviewable(file.filename) && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="rounded-full"
-                                  onClick={() => handlePreviewFile(file.id, file.filename)}
-                                  title="Preview file"
-                                >
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                              )}
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="rounded-full"
-                                onClick={() => handleDownloadFile(file.id, file.filename)}
-                                title="Download file"
-                              >
-                                <Download className="h-4 w-4" />
-                              </Button>
-                              {/* Only show delete button if uploaded by freelancer */}
-                              {file.uploadedBy === 'freelancer' && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="rounded-full text-red-500 hover:text-red-600"
-                                  onClick={() => openDeleteDialog(file.id, file.filename)}
-                                  title="Delete file"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Comments Section (Expandable) */}
-                          {expandedFileId === file.id && (
-                            <div className="border-t border-gray-100 bg-gray-50/50 p-4">
-                              {/* Comment List */}
-                              {file.comments && file.comments.length > 0 ? (
-                                <div className="space-y-3 mb-4 max-h-48 overflow-y-auto">
-                                  {file.comments.map((comment) => (
-                                    <div
-                                      key={comment.id}
-                                      className={`flex ${comment.sender === 'freelancer' ? 'justify-end' : 'justify-start'}`}
-                                    >
-                                      <div
-                                        className={`max-w-[80%] rounded-xl px-3 py-2 ${comment.sender === 'freelancer'
-                                          ? 'bg-primary text-white'
-                                          : 'bg-white border border-gray-200'
-                                          }`}
-                                      >
-                                        <p className="text-sm">{comment.text}</p>
-                                        <p className={`text-xs mt-1 ${comment.sender === 'freelancer' ? 'text-white/70' : 'text-gray-400'}`}>
-                                          {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        </p>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : (
-                                <p className="text-sm text-gray-400 text-center mb-4">No comments yet</p>
-                              )}
-
-                              {/* Add Comment Input */}
-                              <div className="flex gap-2">
-                                <Input
-                                  placeholder="Add a comment..."
-                                  value={newFileComment}
-                                  onChange={(e) => setNewFileComment(e.target.value)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && !e.shiftKey) {
-                                      e.preventDefault();
-                                      handleAddComment(file.id);
-                                    }
-                                  }}
-                                  className="flex-1 rounded-full text-sm"
-                                />
-                                <Button
-                                  size="icon"
-                                  className="rounded-full"
-                                  onClick={() => handleAddComment(file.id)}
-                                  disabled={!newFileComment.trim()}
-                                >
-                                  <Send className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                          );
-                        } catch (error) {
-                          console.error('Error rendering file:', file, error);
-                          return (
-                            <div key={file.id} className="p-4 border border-red-200 rounded-xl bg-red-50">
-                              <p className="text-red-600 text-sm">Error displaying file: {file.filename || 'Unknown'}</p>
-                            </div>
-                          );
-                        }
-                      })}
                       <div
-                        className={`border-2 border-dashed rounded-xl p-6 text-center transition-all cursor-pointer ${isDragging ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-primary/50'}`}
+                        className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all cursor-pointer ${isDragging ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-primary/50'}`}
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
                         onClick={() => setIsUploadDialogOpen(true)}
                       >
-                        <p className="text-sm text-gray-500">Drop more files here or click to upload</p>
+                        <Upload className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                        <p className="text-gray-600 font-medium">Drop files here or click to upload</p>
+                        <p className="text-sm text-gray-400 mt-1">
+                          Supported formats: Images, PDFs, Documents, Videos
+                        </p>
                       </div>
-                    </div>
-                  )}
+                    ) : (
+                      <div className="space-y-3">
+                        {uploadedFiles.map((file) => {
+                          try {
+                            return (
+                              <div
+                                key={file.id}
+                                className="rounded-xl border border-gray-100 overflow-hidden transition-all"
+                              >
+                                {/* File Header */}
+                                <div className="flex items-center justify-between p-4 hover:bg-primary/5 group">
+                                  <div className="flex items-center gap-3">
+                                    <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                                      {getFileIcon(file.filename)}
+                                    </div>
+                                    <div>
+                                      <p className="font-medium text-sm">{file.filename}</p>
+                                      <p className="text-xs text-gray-500">
+                                        {formatFileSize(file.size)} • {new Date(file.createdAt).toLocaleDateString()}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    {/* Comments toggle button */}
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="rounded-full text-gray-500 hover:text-primary"
+                                      onClick={() => setExpandedFileId(expandedFileId === file.id ? null : file.id)}
+                                    >
+                                      <MessageCircle className="h-4 w-4 mr-1" />
+                                      <span className="text-xs">{file.comments?.length || 0}</span>
+                                      {expandedFileId === file.id ? (
+                                        <ChevronUp className="h-3 w-3 ml-1" />
+                                      ) : (
+                                        <ChevronDown className="h-3 w-3 ml-1" />
+                                      )}
+                                    </Button>
+                                    {isPreviewable(file.filename) && (
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="rounded-full"
+                                        onClick={() => handlePreviewFile(file.id, file.filename)}
+                                        title="Preview file"
+                                      >
+                                        <Eye className="h-4 w-4" />
+                                      </Button>
+                                    )}
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="rounded-full"
+                                      onClick={() => handleDownloadFile(file.id, file.filename)}
+                                      title="Download file"
+                                    >
+                                      <Download className="h-4 w-4" />
+                                    </Button>
+                                    {/* Only show delete button if uploaded by freelancer */}
+                                    {file.uploadedBy === 'freelancer' && (
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="rounded-full text-red-500 hover:text-red-600"
+                                        onClick={() => openDeleteDialog(file.id, file.filename)}
+                                        title="Delete file"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Comments Section (Expandable) */}
+                                {expandedFileId === file.id && (
+                                  <div className="border-t border-gray-100 bg-gray-50/50 p-4">
+                                    {/* Comment List */}
+                                    {file.comments && file.comments.length > 0 ? (
+                                      <div className="space-y-3 mb-4 max-h-48 overflow-y-auto">
+                                        {file.comments.map((comment) => (
+                                          <div
+                                            key={comment.id}
+                                            className={`flex ${comment.sender === 'freelancer' ? 'justify-end' : 'justify-start'}`}
+                                          >
+                                            <div
+                                              className={`max-w-[80%] rounded-xl px-3 py-2 ${comment.sender === 'freelancer'
+                                                ? 'bg-primary text-white'
+                                                : 'bg-white border border-gray-200'
+                                                }`}
+                                            >
+                                              <p className="text-sm">{comment.text}</p>
+                                              <p className={`text-xs mt-1 ${comment.sender === 'freelancer' ? 'text-white/70' : 'text-gray-400'}`}>
+                                                {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <p className="text-sm text-gray-400 text-center mb-4">No comments yet</p>
+                                    )}
+
+                                    {/* Add Comment Input */}
+                                    <div className="flex gap-2">
+                                      <Input
+                                        placeholder="Add a comment..."
+                                        value={newFileComment}
+                                        onChange={(e) => setNewFileComment(e.target.value)}
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter' && !e.shiftKey) {
+                                            e.preventDefault();
+                                            handleAddComment(file.id);
+                                          }
+                                        }}
+                                        className="flex-1 rounded-full text-sm"
+                                      />
+                                      <Button
+                                        size="icon"
+                                        className="rounded-full"
+                                        onClick={() => handleAddComment(file.id)}
+                                        disabled={!newFileComment.trim()}
+                                      >
+                                        <Send className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          } catch (error) {
+                            console.error('Error rendering file:', file, error);
+                            return (
+                              <div key={file.id} className="p-4 border border-red-200 rounded-xl bg-red-50">
+                                <p className="text-red-600 text-sm">Error displaying file: {file.filename || 'Unknown'}</p>
+                              </div>
+                            );
+                          }
+                        })}
+                        <div
+                          className={`border-2 border-dashed rounded-xl p-6 text-center transition-all cursor-pointer ${isDragging ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-primary/50'}`}
+                          onDragOver={handleDragOver}
+                          onDragLeave={handleDragLeave}
+                          onDrop={handleDrop}
+                          onClick={() => setIsUploadDialogOpen(true)}
+                        >
+                          <p className="text-sm text-gray-500">Drop more files here or click to upload</p>
+                        </div>
+                      </div>
+                    )}
                   </ErrorBoundary>
                 </CardContent>
               </Card>
@@ -1119,7 +1115,7 @@ const Workspace: React.FC = () => {
                   <div>
                     <CardTitle>Invoices</CardTitle>
                     <p className="text-sm text-muted-foreground mt-1">
-                      {canSendInvoice 
+                      {canSendInvoice
                         ? "Manage billing and payments for this workspace."
                         : `Create draft invoices (${invoices.length}/3 used). Upgrade to Pro to send them to clients.`}
                     </p>
@@ -1128,8 +1124,8 @@ const Workspace: React.FC = () => {
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button 
-                            className="rounded-full" 
+                          <Button
+                            className="rounded-full"
                             onClick={() => {
                               navigate("/settings?tab=pricing");
                               toast("Upgrade to Pro to create unlimited invoices");
@@ -1165,96 +1161,96 @@ const Workspace: React.FC = () => {
                       {invoices.map((invoice) => {
                         const isDraft = invoice.status?.toLowerCase() === 'draft';
                         const isPaid = invoice.status === 'Paid';
-                        
+
                         return (
-                        <div key={invoice.id} className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-primary/20 hover:bg-primary/5 transition-all group">
-                          <div className="flex items-center gap-4">
-                            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                              <Receipt className="h-6 w-6" />
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <p className="font-semibold">{invoice.clientName}</p>
-                                {isDraft && !canSendInvoice && (
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Lock className="h-3 w-3 text-gray-400" />
-                                      </TooltipTrigger>
-                                      <TooltipContent side="top" className="bg-gray-900 text-white">
-                                        <p>Upgrade to Pro to send invoices</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                )}
+                          <div key={invoice.id} className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-primary/20 hover:bg-primary/5 transition-all group">
+                            <div className="flex items-center gap-4">
+                              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                                <Receipt className="h-6 w-6" />
                               </div>
-                              <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                                <span>
-                                  {invoice.invoiceNumber || `INV-${invoice.id.slice(0, 8).toUpperCase()}`}
-                                </span>
-                                <span>•</span>
-                                <span>Due {new Date(invoice.dueDate).toLocaleDateString()}</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-6">
-                            <div className="text-right">
-                              <p className="font-bold text-lg">${((invoice.amount || 0) * (1 + (invoice.taxPercentage || 0) / 100)).toFixed(2)}</p>
-                              <Badge 
-                                variant={isPaid ? 'outline' : 'secondary'} 
-                                className={
-                                  isPaid
-                                    ? 'bg-green-50 text-green-700 border-green-200'
-                                    : isDraft
-                                    ? 'bg-gray-50 text-gray-700 border-gray-200'
-                                    : 'bg-amber-50 text-amber-700 border-amber-200'
-                                }
-                              >
-                                {isDraft ? 'Draft' : invoice.status}
-                              </Badge>
-                            </div>
-
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="rounded-full">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="rounded-xl border-gray-100 shadow-xl">
-                                {isDraft && !canSendInvoice ? (
-                                  <DropdownMenuItem
-                                    className="flex items-center gap-2 cursor-pointer text-primary"
-                                    onClick={() => {
-                                      navigate("/settings?tab=pricing");
-                                      toast("Upgrade to Pro to send invoices to clients");
-                                    }}
-                                  >
-                                    <Lock className="h-4 w-4" />
-                                    Upgrade to Send
-                                  </DropdownMenuItem>
-                                ) : null}
-                                <DropdownMenuItem
-                                  className="flex items-center gap-2 cursor-pointer"
-                                  onClick={() => downloadInvoicePDF(invoice)}
-                                >
-                                  <Download className="h-4 w-4" />
-                                  Download PDF
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive"
-                                  onClick={() => openInvoiceDeleteDialog(
-                                    invoice.id, 
-                                    invoice.invoiceNumber || `INV-${invoice.id.slice(0, 8).toUpperCase()}`
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <p className="font-semibold">{invoice.clientName}</p>
+                                  {isDraft && !canSendInvoice && (
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Lock className="h-3 w-3 text-gray-400" />
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top" className="bg-gray-900 text-white">
+                                          <p>Upgrade to Pro to send invoices</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
                                   )}
+                                </div>
+                                <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                                  <span>
+                                    {invoice.invoiceNumber || `INV-${invoice.id.slice(0, 8).toUpperCase()}`}
+                                  </span>
+                                  <span>•</span>
+                                  <span>Due {new Date(invoice.dueDate).toLocaleDateString()}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-6">
+                              <div className="text-right">
+                                <p className="font-bold text-lg">${((invoice.amount || 0) * (1 + (invoice.taxPercentage || 0) / 100)).toFixed(2)}</p>
+                                <Badge
+                                  variant={isPaid ? 'outline' : 'secondary'}
+                                  className={
+                                    isPaid
+                                      ? 'bg-green-50 text-green-700 border-green-200'
+                                      : isDraft
+                                        ? 'bg-gray-50 text-gray-700 border-gray-200'
+                                        : 'bg-amber-50 text-amber-700 border-amber-200'
+                                  }
                                 >
-                                  <Trash2 className="h-4 w-4" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                                  {isDraft ? 'Draft' : invoice.status}
+                                </Badge>
+                              </div>
+
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="rounded-full">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="rounded-xl border-gray-100 shadow-xl">
+                                  {isDraft && !canSendInvoice ? (
+                                    <DropdownMenuItem
+                                      className="flex items-center gap-2 cursor-pointer text-primary"
+                                      onClick={() => {
+                                        navigate("/settings?tab=pricing");
+                                        toast("Upgrade to Pro to send invoices to clients");
+                                      }}
+                                    >
+                                      <Lock className="h-4 w-4" />
+                                      Upgrade to Send
+                                    </DropdownMenuItem>
+                                  ) : null}
+                                  <DropdownMenuItem
+                                    className="flex items-center gap-2 cursor-pointer"
+                                    onClick={() => downloadInvoicePDF(invoice)}
+                                  >
+                                    <Download className="h-4 w-4" />
+                                    Download PDF
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive"
+                                    onClick={() => openInvoiceDeleteDialog(
+                                      invoice.id,
+                                      invoice.invoiceNumber || `INV-${invoice.id.slice(0, 8).toUpperCase()}`
+                                    )}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
                           </div>
-                        </div>
                         );
                       })}
                     </div>
@@ -1272,7 +1268,7 @@ const Workspace: React.FC = () => {
                 onInvoiceCreated={(newInvoice) => {
                   setInvoices(prev => [newInvoice, ...prev]);
                   setIsInvoiceDialogOpen(false);
-                  
+
                   // Show different messages based on invoice status
                   if (newInvoice.status?.toLowerCase() === 'draft' && !canSendInvoice) {
                     toast.success("Invoice draft created! Upgrade to Pro to send it to your client.", {
@@ -1281,7 +1277,7 @@ const Workspace: React.FC = () => {
                   } else {
                     toast.success("Invoice created successfully!");
                   }
-                  
+
                   // Emit socket event for real-time sync
                   if (id) {
                     emitInvoiceCreated({
@@ -1357,7 +1353,7 @@ const Workspace: React.FC = () => {
               </div>
               <div className="text-xs text-muted-foreground bg-amber-50 border border-amber-200 rounded-lg p-3">
                 <p>
-                  This document is AI-generated and provided for general reference only. 
+                  This document is AI-generated and provided for general reference only.
                   Please consult a qualified legal professional before signing or sharing.
                 </p>
               </div>
@@ -1395,7 +1391,7 @@ const Workspace: React.FC = () => {
                     <p className="text-gray-500 text-center max-w-md px-4">
                       Upgrade to Pro Plus to unlock AI-powered document generation. Create contracts, proposals, and more with just a few clicks!
                     </p>
-                    <Button 
+                    <Button
                       className="mt-4"
                       onClick={() => navigate("/settings?tab=pricing")}
                     >
@@ -1405,8 +1401,8 @@ const Workspace: React.FC = () => {
                 )}
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle>Documents</CardTitle>
-                  <Button 
-                    className="rounded-full" 
+                  <Button
+                    className="rounded-full"
                     disabled={!hasDocsAccess}
                     onClick={() => setIsDocumentDialogOpen(true)}
                   >
@@ -1428,7 +1424,7 @@ const Workspace: React.FC = () => {
                       {savedDocuments.map((doc) => (
                         <Card key={doc.id} className="p-4 hover:shadow-md transition-shadow">
                           <div className="flex items-start justify-between">
-                            <div 
+                            <div
                               className="flex items-start gap-3 flex-1 cursor-pointer"
                               onClick={() => setPreviewDocument(doc)}
                             >
@@ -1502,7 +1498,7 @@ const Workspace: React.FC = () => {
                       const updated = await updateTaskService(taskId, { status, workspaceId: id });
                       if (updated) {
                         setTasks(prev => prev.map(t => t.id === taskId ? updated : t));
-                        
+
                         // Emit socket event for real-time sync
                         if (id) {
                           emitTaskStatusUpdated({
@@ -1520,7 +1516,7 @@ const Workspace: React.FC = () => {
                       if (await deleteTaskService(taskId, id)) {
                         setTasks(prev => prev.filter(t => t.id !== taskId));
                         toast.success("Task deleted");
-                        
+
                         // Emit socket event for real-time sync
                         if (id) {
                           emitTaskDeleted({
@@ -1546,7 +1542,7 @@ const Workspace: React.FC = () => {
                   setTasks(prev => [newTask, ...prev]);
                   setIsTaskDialogOpen(false);
                   toast.success("Task added to board!");
-                  
+
                   // Emit socket event for real-time sync
                   if (id) {
                     emitTaskCreated({
@@ -1580,7 +1576,7 @@ const Workspace: React.FC = () => {
                         className="w-full h-auto rounded-lg"
                       />
                     )}
-                    
+
                     {/* PDF Preview */}
                     {/\.pdf$/i.test(previewFile.filename) && (
                       <iframe
@@ -1589,7 +1585,7 @@ const Workspace: React.FC = () => {
                         title={previewFile.filename}
                       />
                     )}
-                    
+
                     {/* Text Preview */}
                     {/\.(txt|md)$/i.test(previewFile.filename) && (
                       <iframe

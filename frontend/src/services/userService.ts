@@ -18,7 +18,7 @@ export const fetchUser = async (): Promise<User> => {
   } catch (error) {
     console.error("Error fetching user:", error);
     // Fallback to localStorage for initial load
-    const stored = localStorage.getItem('gigflow_user');
+    const stored = localStorage.getItem('clientdocks_user');
     if (stored) {
       return JSON.parse(stored);
     }
@@ -45,11 +45,11 @@ export const updateUserProfile = async (data: Partial<User>): Promise<User> => {
   const result = await response.json();
 
   // Also update localStorage for auth context
-  const stored = localStorage.getItem('gigflow_user');
+  const stored = localStorage.getItem('clientdocks_user');
   if (stored) {
     const user = JSON.parse(stored);
     const updatedUser = { ...user, ...result.user };
-    localStorage.setItem('gigflow_user', JSON.stringify(updatedUser));
+    localStorage.setItem('clientdocks_user', JSON.stringify(updatedUser));
   }
 
   return result.user;

@@ -76,7 +76,7 @@ const VerifyEmailPrompt: React.FC = () => {
                     </div>
 
                     <div className="bg-blue-50 rounded-lg p-4 text-sm text-blue-700">
-                        <p>Please check your inbox and click the verification link to continue using GigFlow.</p>
+                        <p>Please check your inbox and click the verification link to continue using ClientDocks.</p>
                     </div>
 
                     <div className="space-y-3">

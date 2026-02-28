@@ -24,11 +24,11 @@ const VerifyEmail: React.FC = () => {
 
                     // Update cached user data so the auth gate lets them through
                     try {
-                        const stored = localStorage.getItem("gigflow_user");
+                        const stored = localStorage.getItem("clientdocks_user");
                         if (stored) {
                             const user = JSON.parse(stored);
                             user.emailVerified = true;
-                            localStorage.setItem("gigflow_user", JSON.stringify(user));
+                            localStorage.setItem("clientdocks_user", JSON.stringify(user));
                         }
                     } catch {
                         // ignore localStorage errors

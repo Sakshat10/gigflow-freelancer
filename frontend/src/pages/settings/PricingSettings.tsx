@@ -11,12 +11,15 @@ const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID || "";
 const PRO_PLAN_ID = import.meta.env.VITE_PRO_PLAN_ID || "";
 const PRO_PLUS_PLAN_ID = import.meta.env.VITE_PRO_PLUS_PLAN_ID || "";
 
+// 🚧 Set to false to re-enable live payments
+const TESTING_MODE = true;
+
 const plans = [
   {
     id: "free",
     name: "Free",
     price: "$0",
-    description: "Explore GigFlow with one client",
+    description: "Explore ClientDocks with one client",
     features: [
       "1 client workspace",
       "Client chat",
@@ -113,6 +116,17 @@ const PricingSettings: React.FC = () => {
               </p>
             )}
           </CardHeader>
+
+          {/* Testing Mode Banner */}
+          {TESTING_MODE && (
+            <div className="mx-4 mb-4 flex items-center gap-3 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-3">
+              <span className="text-lg">🚧</span>
+              <div>
+                <p className="text-sm font-semibold text-yellow-800">Testing Mode Active</p>
+                <p className="text-xs text-yellow-700">Payments are disabled. No charges will be made.</p>
+              </div>
+            </div>
+          )}
           <CardContent className="grid gap-6 px-4">
             <div className="grid gap-6 md:grid-cols-3">
               {plans.map((plan) => (
@@ -140,65 +154,59 @@ const PricingSettings: React.FC = () => {
                       ))}
                     </ul>
 
-                    {/* Show PayPal button for Pro plan only if user is on free */}
+                    {/* PayPal buttons — disabled in testing mode */}
                     {plan.id === "pro" && user?.plan === "free" ? (
-                      <div id="paypal-button-container-P-84G532022D7433127NFYGD3Q">
-                        <PayPalButtons
-                          fundingSource="paypal"
-                          style={{
-                            shape: "rect",
-                            color: "silver",
-                            layout: "vertical",
-                            label: "pay",
-                          }}
-                          createSubscription={(data, actions) => {
-                            return actions.subscription.create({
-                              plan_id: PRO_PLAN_ID,
-                            });
-                          }}
-                          onApprove={async (data) => {
-                            if (data.subscriptionID) {
-                              await handlePayPalSubscriptionApproval("pro", data.subscriptionID);
-                            }
-                          }}
-                          onError={(err) => {
-                            console.error("PayPal error:", err);
-                            toast.error("Payment failed. Please try again.");
-                          }}
-                        />
-                      </div>
+                      TESTING_MODE ? (
+                        <Button className="w-full" variant="outline" disabled>
+                          🚧 Payments Disabled
+                        </Button>
+                      ) : (
+                        <div id="paypal-button-container-P-84G532022D7433127NFYGD3Q">
+                          <PayPalButtons
+                            fundingSource="paypal"
+                            style={{ shape: "rect", color: "silver", layout: "vertical", label: "pay" }}
+                            createSubscription={(data, actions) => {
+                              return actions.subscription.create({ plan_id: PRO_PLAN_ID });
+                            }}
+                            onApprove={async (data) => {
+                              if (data.subscriptionID) {
+                                await handlePayPalSubscriptionApproval("pro", data.subscriptionID);
+                              }
+                            }}
+                            onError={(err) => {
+                              console.error("PayPal error:", err);
+                              toast.error("Payment failed. Please try again.");
+                            }}
+                          />
+                        </div>
+                      )
                     ) : plan.id === "pro_plus" && user?.plan !== "pro_plus" ? (
-                      <div id="paypal-button-container-P-5LM84565Y6426231ENFYHCCQ">
-                        <PayPalButtons
-                          fundingSource="paypal"
-                          style={{
-                            shape: "rect",
-                            color: "silver",
-                            layout: "vertical",
-                            label: "pay",
-                          }}
-                          createSubscription={(data, actions) => {
-                            return actions.subscription.create({
-                              plan_id: PRO_PLUS_PLAN_ID,
-                            });
-                          }}
-                          onApprove={async (data) => {
-                            if (data.subscriptionID) {
-                              await handlePayPalSubscriptionApproval("pro_plus", data.subscriptionID);
-                            }
-                          }}
-                          onError={(err) => {
-                            console.error("PayPal error:", err);
-                            toast.error("Payment failed. Please try again.");
-                          }}
-                        />
-                      </div>
+                      TESTING_MODE ? (
+                        <Button className="w-full" variant="outline" disabled>
+                          🚧 Payments Disabled
+                        </Button>
+                      ) : (
+                        <div id="paypal-button-container-P-5LM84565Y6426231ENFYHCCQ">
+                          <PayPalButtons
+                            fundingSource="paypal"
+                            style={{ shape: "rect", color: "silver", layout: "vertical", label: "pay" }}
+                            createSubscription={(data, actions) => {
+                              return actions.subscription.create({ plan_id: PRO_PLUS_PLAN_ID });
+                            }}
+                            onApprove={async (data) => {
+                              if (data.subscriptionID) {
+                                await handlePayPalSubscriptionApproval("pro_plus", data.subscriptionID);
+                              }
+                            }}
+                            onError={(err) => {
+                              console.error("PayPal error:", err);
+                              toast.error("Payment failed. Please try again.");
+                            }}
+                          />
+                        </div>
+                      )
                     ) : user?.plan === plan.id ? (
-                      <Button
-                        className="w-full"
-                        variant="outline"
-                        disabled
-                      >
+                      <Button className="w-full" variant="outline" disabled>
                         Current Plan
                       </Button>
                     ) : null}
@@ -210,7 +218,7 @@ const PricingSettings: React.FC = () => {
             {/* Conversion Micro-Copy */}
             <div className="text-center mt-4">
               <p className="text-sm text-muted-foreground">
-                One paid client covers your GigFlow subscription.
+                One paid client covers your ClientDocks subscription.
               </p>
             </div>
 
@@ -279,7 +287,7 @@ const PricingSettings: React.FC = () => {
               {/* Guidance Copy */}
               <div className="text-center mt-8">
                 <p className="text-sm text-muted-foreground">
-                  Free is best to explore GigFlow. Pro is best for getting paid. Pro Plus is best for scaling your work.
+                  Free is best to explore ClientDocks. Pro is best for getting paid. Pro Plus is best for scaling your work.
                 </p>
               </div>
             </div>

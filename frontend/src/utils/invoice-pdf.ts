@@ -14,7 +14,7 @@ export const downloadInvoicePDF = (invoice: Invoice) => {
     <div style="font-family: 'Inter', system-ui, -apple-system, sans-serif; padding: 40px; color: #1a202c; max-width: 800px; margin: auto;">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 60px;">
         <div>
-          <h1 style="color: #4f46e5; font-size: 32px; font-weight: 800; margin: 0; letter-spacing: -0.025em;">GIGFLOW</h1>
+          <h1 style="color: #4f46e5; font-size: 32px; font-weight: 800; margin: 0; letter-spacing: -0.025em;">CLIENTDOCKS</h1>
           <p style="color: #718096; margin-top: 4px; font-weight: 500;">Freelancer Client Management</p>
         </div>
         <div style="text-align: right;">
@@ -78,7 +78,7 @@ export const downloadInvoicePDF = (invoice: Invoice) => {
 
       <div style="margin-top: 100px; padding-top: 40px; border-top: 1px solid #edf2f7; color: #a0aec0; font-size: 12px; text-align: center;">
         <p style="margin-bottom: 8px;">Thank you for your business!</p>
-        <p>GigFlow • Managed via GigFlow Freelancer Platform</p>
+        <p>ClientDocks • Managed via ClientDocks Freelancer Platform</p>
       </div>
     </div>
   `;
