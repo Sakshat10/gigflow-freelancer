@@ -26,14 +26,14 @@ const ReturnPolicy: React.FC = () => {
               
               <h2 className="text-xl font-semibold mt-8 mb-4">About Our Service</h2>
               <p>
-                GigFlow is a software-as-a-service (SaaS) platform that helps freelancers manage their client 
-                relationships. When you subscribe to GigFlow, you gain access to our platform and features based 
+                ClientDocks is a software-as-a-service (SaaS) platform that helps freelancers manage their client 
+                relationships. When you subscribe to ClientDocks, you gain access to our platform and features based 
                 on your chosen plan.
               </p>
               
               <h2 className="text-xl font-semibold mt-8 mb-4">Subscription Plans</h2>
               <p>
-                GigFlow offers recurring subscription plans:
+                ClientDocks offers recurring subscription plans:
               </p>
               <ul className="list-disc pl-6 mt-2 mb-4">
                 <li>Free Plan - No payment required</li>
@@ -58,7 +58,7 @@ const ReturnPolicy: React.FC = () => {
                 that payment will not be refunded, except where required by applicable law.
               </p>
               <p className="mt-4">
-                If you believe you have been charged in error, please contact us at support@gigflow.com within 
+                If you believe you have been charged in error, please contact us at support@clientdocks.com within 
                 7 days of the charge, and we will review your case.
               </p>
               
@@ -113,7 +113,7 @@ const ReturnPolicy: React.FC = () => {
                 If you have questions about subscriptions, billing, or refunds, please contact us at:
               </p>
               <p className="mt-2">
-                <a href="mailto:support@gigflow.com" className="text-blue-600 hover:underline">support@gigflow.com</a>
+                <a href="mailto:support@clientdocks.com" className="text-blue-600 hover:underline">support@clientdocks.com</a>
               </p>
             </div>
           </FadeIn>
