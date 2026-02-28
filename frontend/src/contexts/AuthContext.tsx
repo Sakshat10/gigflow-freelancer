@@ -31,7 +31,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Helper to get stored user from localStorage
 const getStoredUser = (): User | null => {
   try {
-    const stored = localStorage.getItem('gigflow_user');
+    const stored = localStorage.getItem('clientdocks_user');
     return stored ? JSON.parse(stored) : null;
   } catch {
     return null;
@@ -41,9 +41,9 @@ const getStoredUser = (): User | null => {
 // Helper to store user in localStorage
 const storeUser = (user: User | null) => {
   if (user) {
-    localStorage.setItem('gigflow_user', JSON.stringify(user));
+    localStorage.setItem('clientdocks_user', JSON.stringify(user));
   } else {
-    localStorage.removeItem('gigflow_user');
+    localStorage.removeItem('clientdocks_user');
   }
 };
 
@@ -131,12 +131,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsAuthenticated(true);
       storeUser(userData);
 
-      // If email not verified, redirect to verification prompt
-      if (!data.user.emailVerified) {
-        navigate("/verify-email-prompt");
-      } else {
-        navigate("/dashboard");
-      }
+      // Email verification redirect temporarily disabled — go straight to dashboard
+      // if (!data.user.emailVerified) {
+      //   navigate("/verify-email-prompt");
+      // } else {
+      //   navigate("/dashboard");
+      // }
+      navigate("/dashboard");
     } catch (error: any) {
       console.error("Login error:", error);
       throw error;
