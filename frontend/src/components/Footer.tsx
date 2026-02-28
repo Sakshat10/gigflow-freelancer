@@ -9,7 +9,7 @@ const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <div className="grid md:grid-cols-3 gap-8 mb-12">
           <div>
-            <h3 className="text-xl font-bold text-gradient mb-6">GigFlow</h3>
+            <h3 className="text-xl font-bold text-gradient mb-6">ClientDocks</h3>
             <p className="text-gray-600 mb-6">
               Streamlining collaboration between freelancers and clients.
             </p>
@@ -78,7 +78,7 @@ const Footer: React.FC = () => {
 
         <div className="mt-8 pt-8 border-t border-gray-100 text-center text-gray-500 text-sm space-y-2">
           <p className="text-gray-600">Built for freelancers. No contracts. Cancel anytime.</p>
-          <p>© {new Date().getFullYear()} GigFlow. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} ClientDocks. All rights reserved.</p>
         </div>
       </div>
     </footer>
