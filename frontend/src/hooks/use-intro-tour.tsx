@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useState, useRef, useCallback } from 'react';
 import { Steps } from 'intro.js-react';
 import 'intro.js/introjs.css';
 
@@ -61,9 +60,11 @@ export const useIntroTour = (tourKey: string) => {
     initialStep: 0,
     options: defaultOptions,
   });
-  
-  const location = useLocation();
-  
+
+  // Track whether the tour was actually shown — prevents intro.js-react's
+  // spurious onExit calls (it fires onExit even when enabled=false on unmount)
+  const tourStarted = useRef(false);
+
   // Check localStorage for tour status
   const hasSeenTour = localStorage.getItem(`tour_completed_${tourKey}`) === 'true';
   const isFirstTimeUser = localStorage.getItem('first_time_user') === 'true';
@@ -71,8 +72,8 @@ export const useIntroTour = (tourKey: string) => {
 
   const startTour = useCallback((steps: TourStep[], options?: TourConfig['options']) => {
     console.log('startTour called with', steps.length, 'steps');
-    
-    // Use functional update to avoid stale closure
+    tourStarted.current = true; // mark as actually started
+
     setTourConfig(prevConfig => ({
       ...prevConfig,
       steps,
@@ -83,18 +84,25 @@ export const useIntroTour = (tourKey: string) => {
       },
     }));
   }, []);
-  
+
   const endTour = useCallback(() => {
+    // Only write to localStorage if the tour was actually shown to the user.
+    // intro.js-react fires onExit even when enabled=false (on unmount), which
+    // would silently mark the tour as done before the user ever sees it.
+    if (!tourStarted.current) {
+      console.log('endTour ignored — tour was never started for', tourKey);
+      return;
+    }
+
     console.log('endTour called for', tourKey);
+    tourStarted.current = false;
     setTourConfig(prev => ({ ...prev, enabled: false, steps: [] }));
     localStorage.setItem(`tour_completed_${tourKey}`, 'true');
-    
-    // Mark as not first time anymore if this was the dashboard tour
+
     if (tourKey === 'dashboard') {
       localStorage.setItem('first_time_user', 'false');
     }
-    
-    // Mark that first workspace tour was completed if this was a workspace tour
+
     if (tourKey.startsWith('workspace-')) {
       localStorage.setItem('first_workspace_created', 'true');
     }
@@ -103,22 +111,17 @@ export const useIntroTour = (tourKey: string) => {
   const resetTour = useCallback(() => {
     localStorage.removeItem(`tour_completed_${tourKey}`);
   }, [tourKey]);
-  
+
   const onExit = useCallback(() => {
     console.log('onExit called');
     endTour();
   }, [endTour]);
-  
+
   const onComplete = useCallback(() => {
     console.log('onComplete called');
     endTour();
   }, [endTour]);
 
-  // Reset tour config when location changes
-  useEffect(() => {
-    setTourConfig(prev => ({ ...prev, enabled: false, steps: [] }));
-  }, [location.pathname]);
-  
   return {
     tourConfig,
     startTour,
