@@ -81,31 +81,34 @@ const rateLimitHandler = (req, res) => {
 // in-memory store with Redis: npm install rate-limit-redis
 // Example: store: new RedisStore({ sendCommand: (...args) => redisClient.sendCommand(args) })
 
+// 🚧 Skip strict rate limits in development
+const IS_DEV = process.env.NODE_ENV !== 'production';
+
 // Global rate limiter - 300 requests per 15 minutes per IP
 export const globalLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 300,
+    windowMs: 15 * 60 * 1000,
+    max: IS_DEV ? 10000 : 300,
     message: 'Too many requests from this IP, please try again later.',
     standardHeaders: true,
     legacyHeaders: false,
     handler: rateLimitHandler
 });
 
-// Login rate limiter - 5 attempts per 15 minutes per IP
+// Login rate limiter - 5 attempts per 15 minutes per IP (relaxed in dev)
 export const loginLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5,
+    windowMs: 15 * 60 * 1000,
+    max: IS_DEV ? 1000 : 5,
     message: 'Too many login attempts. Please try again in 15 minutes.',
     standardHeaders: true,
     legacyHeaders: false,
-    skipSuccessfulRequests: true, // Don't count successful logins
+    skipSuccessfulRequests: true,
     handler: rateLimitHandler
 });
 
-// Signup rate limiter - 3 attempts per 30 minutes per IP
+// Signup rate limiter - 3 attempts per 30 minutes per IP (relaxed in dev)
 export const signupLimiter = rateLimit({
-    windowMs: 30 * 60 * 1000, // 30 minutes
-    max: 3,
+    windowMs: 30 * 60 * 1000,
+    max: IS_DEV ? 1000 : 3,
     message: 'Too many signup attempts. Please try again in 30 minutes.',
     standardHeaders: true,
     legacyHeaders: false,

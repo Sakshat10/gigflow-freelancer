@@ -6,7 +6,7 @@ import { supabase, STORAGE_BUCKET } from '../src/lib/supabase.js';
  * Run this after setting up your Supabase environment variables
  */
 async function setupSupabaseStorage() {
-    console.log('🚀 Setting up Supabase Storage for GigFlow...');
+    console.log('🚀 Setting up Supabase Storage for ClientDocks...');
     
     try {
         // Check if bucket already exists

@@ -13,7 +13,7 @@ export function initializeSocketServer(httpServer) {
         cors: {
             origin: [
                 "http://localhost:3000",
-                "https://gigflow-freelancer-dun.vercel.app",
+                "https://clientdocks-freelancer-dun.vercel.app",
             ],
             methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
             credentials: true,

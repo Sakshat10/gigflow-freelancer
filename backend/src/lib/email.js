@@ -10,10 +10,10 @@ const resend = process.env.RESEND_API_KEY
  * @param {string} to - Recipient email address
  * @param {string} subject - Email subject
  * @param {string} body - Email body (HTML supported)
- * @param {string} fromName - Sender name (default: GigFlow)
+ * @param {string} fromName - Sender name (default: ClientDocks)
  * @returns {Promise<{success: boolean, data?: any, error?: string}>}
  */
-export async function sendEmail(to, subject, body, fromName = "GigFlow") {
+export async function sendEmail(to, subject, body, fromName = "ClientDocks") {
     if (!resend) {
         console.warn("Email service not configured: RESEND_API_KEY is missing");
         return {
@@ -51,7 +51,7 @@ export async function sendEmail(to, subject, body, fromName = "GigFlow") {
  * @param {string} fromName - Sender name
  * @returns {Promise<{success: boolean, sent: number, failed: number, errors: string[]}>}
  */
-export async function sendBulkEmails(recipients, subject, body, fromName = "GigFlow") {
+export async function sendBulkEmails(recipients, subject, body, fromName = "ClientDocks") {
     const results = {
         success: true,
         sent: 0,
@@ -95,7 +95,7 @@ export async function sendNotificationEmail(type, data) {
                     <p>You have a new message in your workspace <strong>${data.workspaceName || "Unknown"}</strong>.</p>
                     ${data.messagePreview ? `<blockquote style="border-left: 4px solid #3b82f6; padding-left: 16px; margin: 16px 0; color: #666;">${data.messagePreview}</blockquote>` : ""}
                     <a href="${data.link || "#"}" style="display: inline-block; background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 16px;">View Message</a>
-                    <p style="color: #999; margin-top: 24px; font-size: 12px;">You're receiving this email because you have notifications enabled in GigFlow.</p>
+                    <p style="color: #999; margin-top: 24px; font-size: 12px;">You're receiving this email because you have notifications enabled in ClientDocks.</p>
                 </div>
             `
         },
@@ -111,7 +111,7 @@ export async function sendNotificationEmail(type, data) {
                         <p><strong>Due Date:</strong> ${data.dueDate || "N/A"}</p>
                     </div>
                     ${data.paymentUrl ? `<a href="${data.paymentUrl}" style="display: inline-block; background: #22c55e; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 16px;">Pay Now</a>` : ""}
-                    <p style="color: #999; margin-top: 24px; font-size: 12px;">You're receiving this email because an invoice was created for you in GigFlow.</p>
+                    <p style="color: #999; margin-top: 24px; font-size: 12px;">You're receiving this email because an invoice was created for you in ClientDocks.</p>
                 </div>
             `
         },
@@ -126,7 +126,7 @@ export async function sendNotificationEmail(type, data) {
                         <p><strong>Uploaded By:</strong> ${data.uploadedBy || "Unknown"}</p>
                     </div>
                     <a href="${data.link || "#"}" style="display: inline-block; background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 16px;">View File</a>
-                    <p style="color: #999; margin-top: 24px; font-size: 12px;">You're receiving this email because you have notifications enabled in GigFlow.</p>
+                    <p style="color: #999; margin-top: 24px; font-size: 12px;">You're receiving this email because you have notifications enabled in ClientDocks.</p>
                 </div>
             `
         }

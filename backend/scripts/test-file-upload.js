@@ -5,7 +5,7 @@ import { supabase, STORAGE_BUCKET, uploadFile, getSignedUrl, deleteFile } from '
  * Test script to verify file upload functionality
  */
 async function testFileUpload() {
-    console.log('🧪 Testing GigFlow file upload system...\n');
+    console.log('🧪 Testing ClientDocks file upload system...\n');
     
     try {
         // Test 1: Check Supabase connection
@@ -35,7 +35,7 @@ async function testFileUpload() {
         console.log('\n3️⃣ Testing file upload...');
         const testWorkspaceId = 'test-workspace-123';
         const testFilename = 'test-document.txt';
-        const testContent = 'This is a test file for GigFlow file upload system.\nTesting Supabase Storage integration.';
+        const testContent = 'This is a test file for ClientDocks file upload system.\nTesting Supabase Storage integration.';
         const testBuffer = Buffer.from(testContent, 'utf8');
         
         const uploadResult = await uploadFile(testWorkspaceId, testFilename, testBuffer, 'text/plain');

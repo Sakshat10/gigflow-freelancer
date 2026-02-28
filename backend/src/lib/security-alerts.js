@@ -48,9 +48,9 @@ async function sendEmailAlert(subject, body) {
     try {
         const result = await sendEmail(
             ADMIN_EMAIL,
-            `🚨 [GigFlow Security] ${subject}`,
+            `🚨 [ClientDocks Security] ${subject}`,
             body,
-            'GigFlow Security'
+            'ClientDocks Security'
         );
         return result.success;
     } catch (error) {
@@ -136,7 +136,7 @@ function generateAlertEmailBody(alertType, details) {
             </div>
             
             <p style="color: #6b7280; font-size: 12px; margin-top: 16px;">
-                This is an automated security alert from GigFlow. Review immediately if unexpected.
+                This is an automated security alert from ClientDocks. Review immediately if unexpected.
             </p>
         </div>
     `;

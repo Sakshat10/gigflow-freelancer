@@ -59,7 +59,7 @@ router.post("/send", async (req, res) => {
             select: { name: true, company: true }
         });
 
-        const fromName = user?.company || user?.name || "GigFlow";
+        const fromName = user?.company || user?.name || "ClientDocks";
 
         // Send emails
         const results = await sendBulkEmails(recipients, subject, body, fromName);

@@ -33,7 +33,7 @@ async function testSupabaseConnection() {
         
         // Test 3: Test file upload (small test file)
         console.log('\n3️⃣ Testing file upload...');
-        const testContent = 'This is a test file for GigFlow file upload system.';
+        const testContent = 'This is a test file for ClientDocks file upload system.';
         const testBuffer = Buffer.from(testContent, 'utf8');
         const testPath = 'test/test-file.txt';
         
@@ -86,7 +86,7 @@ async function testSupabaseConnection() {
         console.log('✅ Signed URLs working');
         console.log('✅ File deletion working');
         
-        console.log('\n🚀 You can now start using file uploads in your GigFlow app!');
+        console.log('\n🚀 You can now start using file uploads in your ClientDocks app!');
         
     } catch (error) {
         console.error('\n💥 Test failed with error:', error.message);
