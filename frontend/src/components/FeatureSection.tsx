@@ -62,7 +62,7 @@ const FeatureSection: React.FC = () => {
         <FadeIn>
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Why freelancers <span className="text-gradient">switch to GigFlow</span>
+              Why freelancers <span className="text-gradient">switch to ClientDocks</span>
             </h2>
             <p className="text-gray-600 text-lg">
               Stop juggling tools. Keep everything your client needs in one workspace.

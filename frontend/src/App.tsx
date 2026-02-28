@@ -61,10 +61,10 @@ const AuthProtectedRoute = ({
     return <Navigate to="/login" replace />;
   }
 
-  // Block unverified users from accessing the app
-  if (user && user.emailVerified === false) {
-    return <Navigate to="/verify-email-prompt" replace />;
-  }
+  // Email verification check temporarily disabled
+  // if (user && user.emailVerified === false) {
+  //   return <Navigate to="/verify-email-prompt" replace />;
+  // }
 
   return <>{element}</>;
 };
