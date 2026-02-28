@@ -21,7 +21,7 @@ const PrivacyPolicy: React.FC = () => {
               
               <h2 className="text-xl font-semibold mt-8 mb-4">Introduction</h2>
               <p>
-                GigFlow ("we", "our", "us") is a platform designed to help freelancers manage their client relationships. 
+                ClientDocks ("we", "our", "us") is a platform designed to help freelancers manage their client relationships. 
                 This Privacy Policy explains how we collect, use, and protect your information when you use our platform. 
                 Please read this policy carefully. If you do not agree with these terms, please do not use our platform.
               </p>
@@ -42,7 +42,7 @@ const PrivacyPolicy: React.FC = () => {
               <h2 className="text-xl font-semibold mt-8 mb-4">Payment Information</h2>
               <p>
                 All payment transactions are processed by third-party payment providers, such as PayPal. 
-                GigFlow does not store or process your credit card details or other sensitive payment information. 
+                ClientDocks does not store or process your credit card details or other sensitive payment information. 
                 When you make a payment, you are redirected to the payment provider's secure platform. 
                 Please review the payment provider's privacy policy for information on how they handle your data.
               </p>
@@ -85,7 +85,7 @@ const PrivacyPolicy: React.FC = () => {
               <ul className="list-disc pl-6 mt-2 mb-4">
                 <li>With service providers who help us operate our platform (hosting, analytics, customer support)</li>
                 <li>When required by law or to respond to legal requests</li>
-                <li>To protect the rights, property, or safety of GigFlow, our users, or others</li>
+                <li>To protect the rights, property, or safety of ClientDocks, our users, or others</li>
                 <li>In connection with a business transaction (merger, acquisition, or sale of assets)</li>
                 <li>With your consent or at your direction</li>
               </ul>
@@ -101,7 +101,7 @@ const PrivacyPolicy: React.FC = () => {
               <p>
                 Our platform is not intended for users under the age of 18. We do not knowingly collect personal 
                 information from children. If you believe we have collected information from a child under 18, 
-                please contact us at privacy@gigflow.com and we will take steps to delete such information.
+                please contact us at privacy@clientdocks.com and we will take steps to delete such information.
               </p>
               
               <h2 className="text-xl font-semibold mt-8 mb-4">Your Rights</h2>
@@ -116,7 +116,7 @@ const PrivacyPolicy: React.FC = () => {
                 <li>The right to withdraw consent</li>
               </ul>
               <p>
-                To exercise any of these rights, please contact us at privacy@gigflow.com. 
+                To exercise any of these rights, please contact us at privacy@clientdocks.com. 
                 We will respond to your request within a reasonable timeframe.
               </p>
               
@@ -134,7 +134,7 @@ const PrivacyPolicy: React.FC = () => {
                 please contact us at:
               </p>
               <p className="mt-2">
-                <a href="mailto:privacy@gigflow.com" className="text-blue-600 hover:underline">privacy@gigflow.com</a>
+                <a href="mailto:privacy@clientdocks.com" className="text-blue-600 hover:underline">privacy@clientdocks.com</a>
               </p>
             </div>
           </FadeIn>
