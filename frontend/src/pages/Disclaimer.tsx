@@ -26,7 +26,7 @@ const Disclaimer: React.FC = () => {
               
               <h2 className="text-xl font-semibold mt-8 mb-4">Website Disclaimer</h2>
               <p>
-                The information provided on GigFlow is for general informational purposes only. All information on the 
+                The information provided on ClientDocks is for general informational purposes only. All information on the 
                 site is provided in good faith, however, we make no representation or warranty of any kind, express or 
                 implied, regarding the accuracy, adequacy, validity, reliability, availability, or completeness of any 
                 information on the site.
@@ -42,20 +42,20 @@ const Disclaimer: React.FC = () => {
               <h2 className="text-xl font-semibold mt-8 mb-4">External Links</h2>
               <p>
                 The site may contain links to external websites that are not provided or maintained by or in any way 
-                affiliated with GigFlow. Please note that GigFlow does not guarantee the accuracy, relevance, timeliness, 
+                affiliated with ClientDocks. Please note that ClientDocks does not guarantee the accuracy, relevance, timeliness, 
                 or completeness of any information on these external websites.
               </p>
               
               <h2 className="text-xl font-semibold mt-8 mb-4">Errors and Omissions</h2>
               <p>
-                While we strive to provide accurate and up-to-date information, the GigFlow platform may contain technical, 
-                typographical, or photographic errors. GigFlow reserves the right to make changes and corrections at any 
+                While we strive to provide accurate and up-to-date information, the ClientDocks platform may contain technical, 
+                typographical, or photographic errors. ClientDocks reserves the right to make changes and corrections at any 
                 time, without prior notice.
               </p>
               
               <h2 className="text-xl font-semibold mt-8 mb-4">Professional Disclaimer</h2>
               <p>
-                GigFlow is a platform that facilitates collaboration between freelancers and clients. We do not provide 
+                ClientDocks is a platform that facilitates collaboration between freelancers and clients. We do not provide 
                 professional advice or services directly. Any reliance you place on information or services arranged 
                 through our platform is strictly at your own risk.
               </p>
@@ -63,7 +63,7 @@ const Disclaimer: React.FC = () => {
               <h2 className="text-xl font-semibold mt-8 mb-4">Contact Us</h2>
               <p>
                 If you have questions about our Disclaimer, please contact our support team at 
-                <a href="mailto:support@gigflow.com" className="text-blue-600 hover:underline ml-1">support@gigflow.com</a>.
+                <a href="mailto:support@clientdocks.com" className="text-blue-600 hover:underline ml-1">support@clientdocks.com</a>.
               </p>
             </div>
           </FadeIn>
