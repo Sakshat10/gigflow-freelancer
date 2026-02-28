@@ -20,28 +20,28 @@ const Faq: React.FC = () => {
   // FAQ items
   const faqItems = [
     {
-      question: "What is GigFlow?",
-      answer: "GigFlow is an all-in-one platform designed to help freelancers and independent professionals manage client relationships, projects, invoices, and communications in one place. Our goal is to streamline your freelance business operations so you can focus on what you do best."
+      question: "What is ClientDocks?",
+      answer: "ClientDocks is an all-in-one platform designed to help freelancers and independent professionals manage client relationships, projects, invoices, and communications in one place. Our goal is to streamline your freelance business operations so you can focus on what you do best."
     },
     {
       question: "How does the free trial work?",
-      answer: "Our free trial gives you full access to all GigFlow features for 14 days, with no credit card required. After your trial ends, you can choose from our flexible pricing plans to continue using the platform that best suits your needs."
+      answer: "Our free trial gives you full access to all ClientDocks features for 14 days, with no credit card required. After your trial ends, you can choose from our flexible pricing plans to continue using the platform that best suits your needs."
     },
     {
       question: "Can I cancel my subscription anytime?",
-      answer: "Yes, you can cancel your subscription at any time. If you cancel, you'll still have access to GigFlow until the end of your current billing cycle. We don't offer refunds for partial months of service."
+      answer: "Yes, you can cancel your subscription at any time. If you cancel, you'll still have access to ClientDocks until the end of your current billing cycle. We don't offer refunds for partial months of service."
     },
     {
-      question: "Is my data secure on GigFlow?",
+      question: "Is my data secure on ClientDocks?",
       answer: "Absolutely. We take security seriously and implement industry-standard encryption and security practices to protect your data. All information is stored securely and we never share your data with third parties without your consent."
     },
     {
       question: "How do I share work with my clients?",
-      answer: "GigFlow makes client collaboration easy with dedicated workspaces for each client. You can share files, discuss projects, and manage invoices all in one place. Clients receive secure access links to view only what you've specifically shared with them."
+      answer: "ClientDocks makes client collaboration easy with dedicated workspaces for each client. You can share files, discuss projects, and manage invoices all in one place. Clients receive secure access links to view only what you've specifically shared with them."
     },
     {
       question: "Can I customize my invoices?",
-      answer: "Yes, GigFlow offers customizable invoice templates. You can add your logo, change colors, and modify layouts to match your brand identity. All invoices are professional and can be sent directly through the platform."
+      answer: "Yes, ClientDocks offers customizable invoice templates. You can add your logo, change colors, and modify layouts to match your brand identity. All invoices are professional and can be sent directly through the platform."
     },
     {
       question: "What payment methods do you accept?",
@@ -63,7 +63,7 @@ const Faq: React.FC = () => {
             <div className="text-center mb-12">
               <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">Frequently Asked Questions</h1>
               <p className="text-gray-600 max-w-2xl mx-auto">
-                Find answers to the most common questions about GigFlow and how it can help streamline your freelance business.
+                Find answers to the most common questions about ClientDocks and how it can help streamline your freelance business.
               </p>
             </div>
             
