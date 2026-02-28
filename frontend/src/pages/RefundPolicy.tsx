@@ -26,7 +26,7 @@ const RefundPolicy: React.FC = () => {
               
               <h2 className="text-xl font-semibold mt-8 mb-4">Our Refund Policy</h2>
               <p>
-                We want you to be completely satisfied with your subscription to GigFlow. If you're not happy with our 
+                We want you to be completely satisfied with your subscription to ClientDocks. If you're not happy with our 
                 service for any reason, we offer a refund policy that is designed to be fair and transparent.
               </p>
               
@@ -44,7 +44,7 @@ const RefundPolicy: React.FC = () => {
               <h2 className="text-xl font-semibold mt-8 mb-4">How to Request a Refund</h2>
               <p>
                 To request a refund, please contact our support team at 
-                <a href="mailto:support@gigflow.com" className="text-blue-600 hover:underline ml-1">support@gigflow.com</a> 
+                <a href="mailto:support@clientdocks.com" className="text-blue-600 hover:underline ml-1">support@clientdocks.com</a> 
                 with your account details and reason for requesting a refund. Our team will process your request promptly.
               </p>
               
@@ -68,7 +68,7 @@ const RefundPolicy: React.FC = () => {
               <h2 className="text-xl font-semibold mt-8 mb-4">Contact Us</h2>
               <p>
                 If you have questions about our Refund Policy, please contact our support team at 
-                <a href="mailto:support@gigflow.com" className="text-blue-600 hover:underline ml-1">support@gigflow.com</a>.
+                <a href="mailto:support@clientdocks.com" className="text-blue-600 hover:underline ml-1">support@clientdocks.com</a>.
               </p>
             </div>
           </FadeIn>
