@@ -10,16 +10,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { setUserCountry } from "@/utils/countryDetection";
+
+
 
 const signupSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
   email: z.string().email({ message: "Please enter a valid email" }),
   password: z.string().min(8, { message: "Password must be at least 8 characters" }),
-  country: z.enum(['india', 'foreign'], {
-    required_error: "Please select your country"
-  }),
   paypalMeUsername: z.string().optional().refine(
     (val) => !val || /^[a-zA-Z0-9]+$/.test(val),
     { message: "PayPal.me username should only contain letters and numbers" }
@@ -57,7 +54,6 @@ const Signup: React.FC = () => {
       name: "",
       email: "",
       password: "",
-      country: "foreign",
       paypalMeUsername: "",
     },
   });
@@ -69,6 +65,7 @@ const Signup: React.FC = () => {
       // Use our new backend authentication
       const { user, error } = await signup(data.name, data.email, data.password, undefined, data.paypalMeUsername);
 
+
       if (error) throw error;
 
       // Mark this as a first-time user for the tour
@@ -77,14 +74,38 @@ const Signup: React.FC = () => {
       // Reset workspace creation flag - they haven't created any workspaces yet
       localStorage.setItem('first_workspace_created', 'false');
 
-      // Store the country for use after login - THIS IS THE CRITICAL PART
-      setUserCountry(data.country);
-      console.log('Country stored during signup:', data.country);
+      // Clear any stale tour completion flags from previous accounts/sessions
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('tour_completed_')) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+
+      // Also clear sessionStorage tour-triggered flags from previous sessions
+      const ssKeysToRemove: string[] = [];
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i);
+        if (key && (key === 'dashboard_tour_triggered' || key.startsWith('workspace_tour_triggered_'))) {
+          ssKeysToRemove.push(key);
+        }
+      }
+      ssKeysToRemove.forEach(key => sessionStorage.removeItem(key));
+
 
       toast.success("Your account has been created successfully");
 
-      // Redirect to email verification prompt
-      navigate("/verify-email-prompt");
+      // Redirect to email verification prompt (temporarily disabled)
+      // navigate("/verify-email-prompt");
+
+      // Go directly to dashboard (or pricing if a plan was selected)
+      if (selectedPlanId) {
+        navigate("/settings/pricing");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (error: any) {
       console.error("Signup error:", error);
 
@@ -104,9 +125,7 @@ const Signup: React.FC = () => {
     }
   };
 
-  // Determine if payment option hint should show Razorpay or PayPal
-  const selectedCountry = form.watch('country');
-  const paymentOption = selectedCountry === 'india' ? 'Razorpay' : 'PayPal';
+
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
@@ -115,13 +134,12 @@ const Signup: React.FC = () => {
           <div className="text-center">
             <h1 className="text-2xl font-bold">Create an account</h1>
             <p className="text-gray-500 mt-2">
-              Join thousands of freelancers using GigFlow
+              Join thousands of freelancers using ClientDocks
             </p>
             {selectedPlanId && (
               <div className="mt-2 p-2 bg-blue-50 rounded-md text-sm">
                 <p className="font-medium">
                   You'll be shown payment options after signup
-                  {` (${paymentOption})`}
                 </p>
               </div>
             )}
@@ -174,30 +192,6 @@ const Signup: React.FC = () => {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="country"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Country</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select your country" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="india">India</SelectItem>
-                        <SelectItem value="foreign">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      This helps us show you the appropriate payment options
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
               <FormField
                 control={form.control}
