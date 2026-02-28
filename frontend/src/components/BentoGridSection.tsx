@@ -60,7 +60,7 @@ const BentoGridSection: React.FC = () => {
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-5">
               Why freelancers{" "}
-              <span className="text-gradient">switch to GigFlow</span>
+              <span className="text-gradient">switch to ClientDocks</span>
             </h2>
             <p className="text-gray-500 text-lg max-w-xl mx-auto">
               Stop juggling WhatsApp, email, Drive, and payment reminders.
