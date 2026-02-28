@@ -183,7 +183,7 @@ const Navbar: React.FC = () => {
             <div className="bg-gradient-to-r from-primary to-blue-400 text-white p-1 rounded-lg flex items-center justify-center">
               <Sparkles className="h-6 w-6" />
             </div>
-            <span className="text-gradient ml-1">GigFlow</span>
+            <span className="text-gradient ml-1">ClientDocks</span>
           </NavLink>
         ) : (
           <NavLink
@@ -194,7 +194,7 @@ const Navbar: React.FC = () => {
             <div className="bg-gradient-to-r from-primary to-blue-400 text-white p-1 rounded-lg flex items-center justify-center">
               <Sparkles className="h-6 w-6" />
             </div>
-            <span className="text-gradient ml-1">GigFlow</span>
+            <span className="text-gradient ml-1">ClientDocks</span>
           </NavLink>
         )}
 
