@@ -1,6 +1,6 @@
-# Contributing to GigFlow
+# Contributing to ClientDocks
 
-We love your input! We want to make contributing to GigFlow as easy and transparent as possible, whether it's:
+We love your input! We want to make contributing to ClientDocks as easy and transparent as possible, whether it's:
 
 - Reporting a bug
 - Discussing the current state of the code
@@ -25,8 +25,8 @@ We use GitHub to host code, to track issues and feature requests, as well as acc
 
 1. **Fork and Clone**
    ```bash
-   git clone https://github.com/yourusername/gigflow-freelancer.git
-   cd gigflow-freelancer
+   git clone https://github.com/yourusername/clientdocks-freelancer.git
+   cd clientdocks-freelancer
    ```
 
 2. **Install Dependencies**
@@ -134,7 +134,7 @@ npm run test:e2e     # Run end-to-end tests (when implemented)
 
 ## Bug Reports
 
-We use GitHub issues to track public bugs. Report a bug by [opening a new issue](https://github.com/yourusername/gigflow-freelancer/issues).
+We use GitHub issues to track public bugs. Report a bug by [opening a new issue](https://github.com/yourusername/clientdocks-freelancer/issues).
 
 **Great Bug Reports** tend to have:
 
@@ -177,7 +177,7 @@ Add any other context about the problem here.
 
 ## Feature Requests
 
-We use GitHub issues to track feature requests. Request a feature by [opening a new issue](https://github.com/yourusername/gigflow-freelancer/issues) with the "enhancement" label.
+We use GitHub issues to track feature requests. Request a feature by [opening a new issue](https://github.com/yourusername/clientdocks-freelancer/issues) with the "enhancement" label.
 
 ### Feature Request Template
 
@@ -216,7 +216,7 @@ Add any other context or screenshots about the feature request here.
 
 ### Reporting Security Issues
 
-Please do not report security vulnerabilities through public GitHub issues. Instead, please send an email to security@gigflow.com.
+Please do not report security vulnerabilities through public GitHub issues. Instead, please send an email to security@clientdocks.com.
 
 ### Security Best Practices
 
@@ -236,6 +236,6 @@ By contributing, you agree that your contributions will be licensed under the MI
 Feel free to reach out:
 - Create an issue for bugs or feature requests
 - Start a discussion for questions or ideas
-- Email us at contribute@gigflow.com
+- Email us at contribute@clientdocks.com
 
-Thank you for contributing to GigFlow! 🚀
+Thank you for contributing to ClientDocks! 🚀

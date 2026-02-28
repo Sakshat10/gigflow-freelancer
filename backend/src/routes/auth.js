@@ -123,12 +123,12 @@ router.post("/register", signupLimiter, async (req, res) => {
         const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:8080'}/verify-email/${emailVerificationToken}`;
         await sendEmail(
             user.email,
-            "Verify your GigFlow email",
+            "Verify your ClientDocks email",
             `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h2 style="color: #3b82f6;">Welcome to GigFlow!</h2>
+                <h2 style="color: #3b82f6;">Welcome to ClientDocks!</h2>
                 <p>Please verify your email address by clicking the button below:</p>
                 <a href="${verificationUrl}" style="display: inline-block; background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 16px;">Verify Email</a>
-                <p style="color: #999; margin-top: 24px; font-size: 12px;">If you did not create a GigFlow account, you can ignore this email.</p>
+                <p style="color: #999; margin-top: 24px; font-size: 12px;">If you did not create a ClientDocks account, you can ignore this email.</p>
             </div>`
         );
         console.log(`📧 Verification email sent to ${user.email}`);
@@ -312,12 +312,12 @@ router.post("/resend-verification", async (req, res) => {
         const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:8080'}/verify-email/${emailVerificationToken}`;
         await sendEmail(
             user.email,
-            "Verify your GigFlow email",
+            "Verify your ClientDocks email",
             `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <h2 style="color: #3b82f6;">Verify your email</h2>
                 <p>Please verify your email address by clicking the button below:</p>
                 <a href="${verificationUrl}" style="display: inline-block; background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 16px;">Verify Email</a>
-                <p style="color: #999; margin-top: 24px; font-size: 12px;">If you did not create a GigFlow account, you can ignore this email.</p>
+                <p style="color: #999; margin-top: 24px; font-size: 12px;">If you did not create a ClientDocks account, you can ignore this email.</p>
             </div>`
         );
 
@@ -453,7 +453,7 @@ router.post("/forgot-password", async (req, res) => {
             const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:8080'}/reset-password/${resetToken}`;
             await sendEmail(
                 user.email,
-                "Reset your GigFlow password",
+                "Reset your ClientDocks password",
                 `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                     <h2 style="color: #3b82f6;">Password Reset</h2>
                     <p>You requested a password reset. Click the button below to set a new password:</p>

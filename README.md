@@ -1,8 +1,8 @@
-# GigFlow - Freelancer Management Platform
+# ClientDocks - Freelancer Management Platform
 
 <div align="center">
 
-![GigFlow Logo](https://via.placeholder.com/200x80/4F46E5/FFFFFF?text=GigFlow)
+![ClientDocks Logo](https://via.placeholder.com/200x80/4F46E5/FFFFFF?text=ClientDocks)
 
 **A modern, full-stack freelancer management SaaS platform built for seamless client-freelancer collaboration.**
 
@@ -12,7 +12,7 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-13+-blue.svg)](https://postgresql.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-Storage-green.svg)](https://supabase.com/)
 
-[Demo](https://gigflow-freelancer-dun.vercel.app) • [Documentation](#documentation) • [API Reference](#api-reference) • [Contributing](#contributing)
+[Demo](https://clientdocks-freelancer-dun.vercel.app) • [Documentation](#documentation) • [API Reference](#api-reference) • [Contributing](#contributing)
 
 </div>
 
@@ -20,7 +20,7 @@
 
 ## 🚀 Overview
 
-GigFlow is a comprehensive freelancer management platform that streamlines project collaboration between freelancers and their clients. Built with modern web technologies, it offers secure file sharing, real-time communication, invoice management, and project tracking in one unified platform.
+ClientDocks is a comprehensive freelancer management platform that streamlines project collaboration between freelancers and their clients. Built with modern web technologies, it offers secure file sharing, real-time communication, invoice management, and project tracking in one unified platform.
 
 ### ✨ Key Features
 
@@ -62,7 +62,7 @@ GigFlow is a comprehensive freelancer management platform that streamlines proje
 ### Project Structure
 
 ```
-gigflow-freelancer/
+clientdocks-freelancer/
 ├── frontend/                 # React frontend application
 │   ├── src/
 │   │   ├── components/      # Reusable UI components
@@ -98,8 +98,8 @@ gigflow-freelancer/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/gigflow-freelancer.git
-   cd gigflow-freelancer
+   git clone https://github.com/yourusername/clientdocks-freelancer.git
+   cd clientdocks-freelancer
    ```
 
 2. **Install dependencies**
@@ -252,7 +252,7 @@ DELETE /api/workspaces/:id/invoices/:id # Delete invoice
 
 ## 📁 File Upload System
 
-GigFlow features a robust file management system built on Supabase Storage:
+ClientDocks features a robust file management system built on Supabase Storage:
 
 ### Features
 - ✅ **Secure Uploads** for freelancers and clients
@@ -413,7 +413,7 @@ SMTP_PASS=your_password
 ## 📊 Monitoring & Analytics
 
 ### Health Checks
-- **API Health**: `GET /` returns "GigFlow API is running"
+- **API Health**: `GET /` returns "ClientDocks API is running"
 - **Database**: Prisma connection status
 - **Storage**: Supabase bucket accessibility
 
@@ -464,9 +464,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Deployment Guide](#deployment)
 
 ### Community
-- **Issues**: [GitHub Issues](https://github.com/yourusername/gigflow-freelancer/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/gigflow-freelancer/discussions)
-- **Email**: support@gigflow.com
+- **Issues**: [GitHub Issues](https://github.com/yourusername/clientdocks-freelancer/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/yourusername/clientdocks-freelancer/discussions)
+- **Email**: support@clientdocks.com
 
 ### Troubleshooting
 
