@@ -7,6 +7,20 @@ import { initializeSocketServer } from "./src/lib/socket.js";
 import apiRouter from "./src/routes/index.js";
 import { globalLimiter, attachUserToRequest } from "./src/middleware/rate-limiter.js";
 import { sanitizeBody } from "./src/middleware/input-sanitizer.js";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
+// 🚧 Dev-only: ping DB every 4 min to prevent Neon free-tier auto-pause
+if (process.env.NODE_ENV !== 'production') {
+    setInterval(async () => {
+        try {
+            await prisma.$queryRaw`SELECT 1`;
+        } catch (e) {
+            console.warn('DB keepalive ping failed:', e.message);
+        }
+    }, 4 * 60 * 1000); // every 4 minutes
+}
 
 const app = express();
 
@@ -43,7 +57,7 @@ const allowedOrigins = [
     "http://localhost:8080",
     "http://localhost:5173",
     "http://localhost:3000",
-    "https://gigflow-freelancer-dun.vercel.app",
+    "https://clientdocks-freelancer-dun.vercel.app",
 ];
 
 // Add production frontend URL from environment variable
@@ -92,7 +106,7 @@ app.use(sanitizeBody);
 app.get("/", (_req, res) => {
     res.status(200).json({
         status: "ok",
-        message: "GigFlow API is running",
+        message: "ClientDocks API is running",
         version: "1.0.0"
     });
 });
