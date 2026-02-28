@@ -12,7 +12,7 @@ const plans = [
     name: "Free",
     price: "$0",
     yearlyPrice: "$0",
-    description: "Explore GigFlow with one client",
+    description: "Explore ClientDocks with one client",
     features: [
       "1 client workspace",
       "Client chat",
@@ -158,7 +158,7 @@ const PricingSection: React.FC<PricingSectionProps> = ({ onPlanSelect }) => {
       {/* Conversion Micro-Copy */}
       <div className="text-center mt-8 px-4">
         <p className="text-sm text-muted-foreground">
-          One paid client covers your GigFlow subscription.
+          One paid client covers your ClientDocks subscription.
         </p>
       </div>
 
@@ -227,7 +227,7 @@ const PricingSection: React.FC<PricingSectionProps> = ({ onPlanSelect }) => {
         {/* Guidance Copy */}
         <div className="text-center mt-8">
           <p className="text-sm text-muted-foreground">
-            Free is best to explore GigFlow. Pro is best for getting paid. Pro Plus is best for scaling your work.
+            Free is best to explore ClientDocks. Pro is best for getting paid. Pro Plus is best for scaling your work.
           </p>
         </div>
       </div>
