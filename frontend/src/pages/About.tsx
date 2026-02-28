@@ -16,7 +16,7 @@ const About: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4">
           <FadeIn>
             <div className="text-center mb-16">
-              <h1 className="text-4xl font-bold mb-4">About GigFlow</h1>
+              <h1 className="text-4xl font-bold mb-4">About ClientDocks</h1>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
                 Streamlining collaboration between freelancers and clients since 2023
               </p>
@@ -28,7 +28,7 @@ const About: React.FC = () => {
               <div>
                 <h2 className="text-3xl font-bold mb-6">Our Mission</h2>
                 <p className="text-lg text-gray-700 mb-6">
-                  At GigFlow, we're on a mission to transform how freelancers and clients work together. 
+                  At ClientDocks, we're on a mission to transform how freelancers and clients work together. 
                   We believe that successful collaboration shouldn't be complicated, which is why we've 
                   built a platform that removes the friction from freelance work.
                 </p>
@@ -99,7 +99,7 @@ const About: React.FC = () => {
               <h2 className="text-3xl font-bold mb-6">Join Our Journey</h2>
               <p className="text-blue-100 text-lg mb-8 max-w-2xl mx-auto">
                 Whether you're a freelancer looking to streamline your workflow or a business seeking better 
-                collaboration tools, we'd love to have you join the GigFlow community.
+                collaboration tools, we'd love to have you join the ClientDocks community.
               </p>
               <NavLink to="/signup">
                 <Button size="lg" variant="secondary" className="rounded-full px-8 py-6 text-primary font-medium hover:scale-105 transition-transform">
