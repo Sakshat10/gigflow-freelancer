@@ -86,7 +86,7 @@ export function setAuthCookie(res, token) {
     res.cookie(COOKIE_NAME, token, {
         httpOnly: true,
         secure: isProduction, // HTTPS only in production
-        sameSite: isProduction ? "strict" : "lax", // Strict in production
+        sameSite: isProduction ? "none" : "lax", // None in production for cross-origin
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         path: "/",
     });
@@ -99,7 +99,7 @@ export function setRefreshCookie(res, refreshToken) {
     res.cookie(REFRESH_COOKIE_NAME, refreshToken, {
         httpOnly: true,
         secure: isProduction,
-        sameSite: isProduction ? "strict" : "lax",
+        sameSite: isProduction ? "none" : "lax",
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
         path: "/api/auth/refresh",
     });
@@ -112,14 +112,14 @@ export function clearAuthCookie(res) {
     res.clearCookie(COOKIE_NAME, {
         httpOnly: true,
         secure: isProduction,
-        sameSite: isProduction ? "strict" : "lax",
+        sameSite: isProduction ? "none" : "lax",
         path: "/",
     });
 
     res.clearCookie(REFRESH_COOKIE_NAME, {
         httpOnly: true,
         secure: isProduction,
-        sameSite: isProduction ? "strict" : "lax",
+        sameSite: isProduction ? "none" : "lax",
         path: "/api/auth/refresh",
     });
 }
