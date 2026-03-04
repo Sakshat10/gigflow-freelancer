@@ -3,7 +3,7 @@ import { prisma } from "../lib/prisma.js";
 import { getCurrentUser } from "../lib/auth.js";
 import { v4 as uuidv4 } from "uuid";
 import { uploadSingle, handleUploadError } from "../lib/upload.js";
-import { uploadFile, getSignedUrl, deleteFile } from "../lib/supabase.js";
+import { uploadFile, getSignedUrl, deleteFile } from "../lib/imagekit.js";
 
 const router = Router();
 
