@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { uploadSingle, handleUploadError } from "../lib/upload.js";
-import { uploadFile, getSignedUrl } from "../lib/supabase.js";
+import { uploadFile, getSignedUrl } from "../lib/imagekit.js";
 import { v4 as uuidv4 } from "uuid";
 import { clientRouteLimiter } from "../middleware/rate-limiter.js";
 
@@ -133,7 +133,7 @@ router.delete("/:shareToken/files/:fileId", async (req, res) => {
 
         // Delete from Supabase Storage if it exists
         if (file.storagePath) {
-            const { deleteFile } = await import("../lib/supabase.js");
+            const { deleteFile } = await import("../lib/imagekit.js");
             await deleteFile(file.storagePath);
         }
 
