@@ -1,15 +1,10 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { NavLink } from "react-router-dom";
 import { FadeIn } from "@/components/animations/FadeIn";
-import { renderCanvas } from "@/components/ui/canvas";
 
 const HeroSection: React.FC = () => {
-  useEffect(() => {
-    renderCanvas();
-  }, []);
-
   const scrollToHowItWorks = () => {
     const howItWorksSection = document.getElementById('how-it-works');
     if (howItWorksSection) {
@@ -26,13 +21,13 @@ const HeroSection: React.FC = () => {
               One workspace per client. <span className="text-gradient">No chaos.</span> Get paid faster.
             </h1>
           </FadeIn>
-          
+
           <FadeIn delay="200">
             <p className="text-lg text-gray-600 md:pr-8 leading-relaxed">
               Chat, files, tasks, invoices, and updates — all in one clean workspace your clients actually understand.
             </p>
           </FadeIn>
-          
+
           <FadeIn delay="300">
             <div className="flex flex-wrap gap-4 pt-2">
               <NavLink to="/signup">
@@ -40,9 +35,9 @@ const HeroSection: React.FC = () => {
                   Start Free (1 Client Workspace)
                 </Button>
               </NavLink>
-              <Button 
-                size="lg" 
-                variant="outline" 
+              <Button
+                size="lg"
+                variant="outline"
                 className="rounded-full px-8 py-6 hover-translate"
                 onClick={scrollToHowItWorks}
               >
@@ -51,7 +46,7 @@ const HeroSection: React.FC = () => {
             </div>
           </FadeIn>
         </div>
-        
+
         <div className="relative md:mt-0 mt-8">
           <FadeIn direction="left" delay="200">
             <div className="w-full h-[500px] rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 p-4 relative overflow-hidden shadow-card">
@@ -63,17 +58,17 @@ const HeroSection: React.FC = () => {
                     <p className="text-xs text-gray-500">Last activity: Today</p>
                   </div>
                 </div>
-                
+
                 <div className="flex-1 grid grid-cols-2 gap-3">
                   <div className="glass-effect rounded-xl p-4 flex flex-col justify-between animate-float">
                     <h4 className="font-medium text-sm">Files</h4>
                     <span className="text-2xl font-bold">12</span>
                   </div>
-                  <div className="glass-effect rounded-xl p-4 flex flex-col justify-between animate-float" style={{ animationDelay: "1s"}}>
+                  <div className="glass-effect rounded-xl p-4 flex flex-col justify-between animate-float" style={{ animationDelay: "1s" }}>
                     <h4 className="font-medium text-sm">Messages</h4>
                     <span className="text-2xl font-bold">48</span>
                   </div>
-                  <div className="glass-effect rounded-xl p-4 col-span-2 flex flex-col h-32 animate-float" style={{ animationDelay: "0.5s"}}>
+                  <div className="glass-effect rounded-xl p-4 col-span-2 flex flex-col h-32 animate-float" style={{ animationDelay: "0.5s" }}>
                     <h4 className="font-medium text-sm mb-2">Recent Activity</h4>
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2">
@@ -87,8 +82,8 @@ const HeroSection: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                
-                <div className="glass-effect rounded-xl p-4 mt-3 animate-float" style={{ animationDelay: "1.5s"}}>
+
+                <div className="glass-effect rounded-xl p-4 mt-3 animate-float" style={{ animationDelay: "1.5s" }}>
                   <h4 className="font-medium text-sm mb-2">Upcoming</h4>
                   <div className="flex justify-between items-center">
                     <div className="flex items-center space-x-2">
@@ -103,18 +98,12 @@ const HeroSection: React.FC = () => {
               </div>
             </div>
           </FadeIn>
-          
+
           {/* Decorative elements */}
           <div className="absolute -z-10 -top-10 -right-10 w-40 h-40 bg-blue-200/30 rounded-full blur-3xl"></div>
           <div className="absolute -z-10 bottom-10 -left-10 w-40 h-40 bg-indigo-200/30 rounded-full blur-3xl"></div>
         </div>
       </div>
-      
-      {/* Canvas for cursor effect */}
-      <canvas
-        className="pointer-events-none absolute inset-0 z-0"
-        id="canvas"
-      ></canvas>
     </section>
   );
 };
