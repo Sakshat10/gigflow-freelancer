@@ -5,6 +5,7 @@ import { FadeIn } from "@/components/animations/FadeIn";
 import WorkspaceCard from "@/components/WorkspaceCard";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Search, Mail, Calendar, User, Lock } from "lucide-react";
+import HelpTourButton from "@/components/HelpTourButton";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Workspace } from "@/types";
@@ -31,11 +32,56 @@ const Dashboard: React.FC = () => {
   const {
     tourConfig,
     startTour,
+    resetTour,
     hasSeenTour,
     isFirstTimeUser,
     onExit,
     onComplete
   } = useIntroTour('dashboard');
+
+  // Restart tour on demand
+  const handleRestartTour = () => {
+    resetTour();
+    const steps: TourStep[] = [
+      {
+        element: '#dashboard-header',
+        title: '👋 Welcome to ClientDocks!',
+        intro: 'This is your dashboard where you manage all your client workspaces.',
+        position: 'bottom',
+      },
+      {
+        element: '#search-workspaces',
+        title: '🔍 Quick Search',
+        intro: 'Find any workspace instantly by typing the client name.',
+        position: 'bottom',
+      },
+      {
+        element: '#email-clients-btn',
+        title: '📧 Email Clients',
+        intro: 'Send professional emails to your clients directly from ClientDocks.',
+        position: 'bottom',
+      },
+      {
+        element: '#new-workspace-btn',
+        title: '✨ Create Workspaces',
+        intro: 'Click here to create a new workspace for each client. Each workspace has files, chat, invoices, and more!',
+        position: 'bottom',
+      },
+      {
+        element: '#workspaces-section',
+        title: '📁 Your Workspaces',
+        intro: 'All your client workspaces appear here. Click on any to access files, chat, invoices, and tasks.',
+        position: 'top',
+      },
+      {
+        element: '#profile-section',
+        title: '👤 Your Profile',
+        intro: 'View your account info and upgrade your plan for more features!',
+        position: 'left',
+      },
+    ];
+    startTour(steps);
+  };
 
   // Load workspaces from localStorage
   useEffect(() => {
@@ -183,9 +229,12 @@ const Dashboard: React.FC = () => {
       <main className="flex-1 pt-24 pb-12 px-4 max-w-7xl mx-auto w-full">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <FadeIn>
-            <div id="dashboard-header">
-              <h1 className="text-3xl font-bold">Dashboard</h1>
-              <p className="text-gray-600 mt-1">Manage your client workspaces</p>
+            <div id="dashboard-header" className="flex items-center gap-3">
+              <div>
+                <h1 className="text-3xl font-bold">Dashboard</h1>
+                <p className="text-gray-600 mt-1">Manage your client workspaces</p>
+              </div>
+              <HelpTourButton onClick={handleRestartTour} tooltipText="Restart guided tour" />
             </div>
           </FadeIn>
 
