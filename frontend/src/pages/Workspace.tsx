@@ -82,6 +82,7 @@ import {
   deleteFile,
   addFileComment,
   getFileDownloadUrl,
+  downloadFileBlob,
   WorkspaceFile,
   FileComment,
 } from "@/services/fileService";
@@ -92,6 +93,7 @@ import 'intro.js/introjs.css';
 import { Invoice, Thing } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { MoreVertical, Download, ExternalLink, Trash2, Clock, Eye } from "lucide-react";
+import HelpTourButton from "@/components/HelpTourButton";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
@@ -346,13 +348,12 @@ const Workspace: React.FC = () => {
     try {
       const downloadUrl = await getFileDownloadUrl(id, fileId);
       if (downloadUrl) {
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success('Download started');
+        const success = await downloadFileBlob(downloadUrl, filename);
+        if (success) {
+          toast.success('Download started');
+        } else {
+          toast.error('Failed to download file');
+        }
       } else {
         toast.error('Failed to get download URL');
       }
@@ -402,6 +403,7 @@ const Workspace: React.FC = () => {
   const {
     tourConfig,
     startTour,
+    resetTour,
     hasSeenTour,
     isFirstWorkspace,
     onExit,
@@ -666,6 +668,56 @@ const Workspace: React.FC = () => {
     });
   };
 
+  // Restart workspace tour on demand
+  const handleRestartTour = () => {
+    resetTour();
+    const steps: TourStep[] = [
+      {
+        element: '#workspace-header',
+        title: '🎉 Welcome to your Workspace!',
+        intro: 'This is where you manage everything for this client - files, chat, invoices, and more.',
+        position: 'bottom',
+      },
+      {
+        element: '#tab-files',
+        title: '📁 Files',
+        intro: 'Upload and share documents, images, and any files with your client.',
+        position: 'bottom',
+      },
+      {
+        element: '#tab-chat',
+        title: '💬 Chat',
+        intro: 'Have real-time conversations with your client. Keep all project discussions in one place.',
+        position: 'bottom',
+      },
+      {
+        element: '#tab-invoices',
+        title: '💰 Invoices',
+        intro: 'Create professional invoices and track payments.',
+        position: 'bottom',
+      },
+      {
+        element: '#tab-documents',
+        title: '📝 Documents',
+        intro: 'Generate contracts, proposals, and other documents using AI-powered templates.',
+        position: 'bottom',
+      },
+      {
+        element: '#tab-tasks',
+        title: '✅ Tasks',
+        intro: 'Track project milestones, deliverables, and to-dos.',
+        position: 'bottom',
+      },
+      {
+        element: '#share-btn',
+        title: '🔗 Share Workspace',
+        intro: 'Click here to get a shareable link. Your client can access the workspace without logging in!',
+        position: 'left',
+      },
+    ];
+    startTour(steps);
+  };
+
   const colorMap: Record<string, string> = {
     blue: "bg-blue-50 border-blue-200",
     purple: "bg-purple-50 border-purple-200",
@@ -760,6 +812,7 @@ const Workspace: React.FC = () => {
               </div>
 
               <div className="flex gap-2">
+                <HelpTourButton onClick={handleRestartTour} tooltipText="Restart workspace tour" />
                 <Button
                   id="share-btn"
                   variant="outline"
