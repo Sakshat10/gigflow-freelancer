@@ -53,7 +53,12 @@ const AuthProtectedRoute = ({
 }: {
   element: React.ReactNode
 }) => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading } = useAuth();
+
+  // Wait for auth initialization to complete before deciding
+  if (isLoading) {
+    return null;
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -75,8 +80,12 @@ const FeatureProtectedRoute = ({
   element: React.ReactNode,
   feature: string
 }) => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
+
+  if (isLoading) {
+    return null;
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
