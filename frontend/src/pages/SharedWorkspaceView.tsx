@@ -197,7 +197,7 @@ const SharedWorkspaceView: React.FC = () => {
     try {
       for (const file of Array.from(files)) {
         const uploadedFile = await uploadFileAsClient(id, file);
-        
+
         if (uploadedFile) {
           // Add the new file to the workspace
           setWorkspace(prev => {
@@ -207,7 +207,7 @@ const SharedWorkspaceView: React.FC = () => {
               files: [uploadedFile, ...prev.files]
             };
           });
-          
+
           // Emit socket event for real-time sync
           if (workspace) {
             emitFileUploaded({
@@ -239,7 +239,7 @@ const SharedWorkspaceView: React.FC = () => {
     // Find the file to check uploadedBy
     const file = workspace?.files.find(f => f.id === fileToDelete.id);
     console.log('File to delete:', file);
-    
+
     if (!file) {
       toast.error('File not found');
       setIsDeleteDialogOpen(false);
@@ -266,7 +266,7 @@ const SharedWorkspaceView: React.FC = () => {
           };
         });
         toast.success('File deleted');
-        
+
         // Emit socket event for real-time sync
         if (workspace) {
           emitFileDeleted({
@@ -281,7 +281,7 @@ const SharedWorkspaceView: React.FC = () => {
       console.error('Delete error:', error);
       toast.error('Failed to delete file. Check console for details.');
     }
-    
+
     setIsDeleteDialogOpen(false);
     setFileToDelete(null);
   };
@@ -292,7 +292,7 @@ const SharedWorkspaceView: React.FC = () => {
 
     try {
       const comment = await addFileCommentAsClient(id, fileId, newFileComment.trim());
-      
+
       if (comment) {
         // Update the workspace files with the new comment
         setWorkspace(prev => {
@@ -313,7 +313,7 @@ const SharedWorkspaceView: React.FC = () => {
         });
         setNewFileComment('');
         toast.success('Comment added');
-        
+
         // Emit socket event for real-time sync
         if (workspace) {
           emitFileCommentAdded({
@@ -338,13 +338,13 @@ const SharedWorkspaceView: React.FC = () => {
     try {
       const downloadUrl = await getFileDownloadUrl('', fileId, id); // Use shareToken for client
       if (downloadUrl) {
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success('Download started');
+        const { downloadFileBlob } = await import("@/services/fileService");
+        const success = await downloadFileBlob(downloadUrl, filename);
+        if (success) {
+          toast.success('Download started');
+        } else {
+          toast.error('Failed to download file');
+        }
       } else {
         toast.error('Failed to get download URL');
       }
@@ -381,16 +381,16 @@ const SharedWorkspaceView: React.FC = () => {
         }
 
         const data = await response.json();
-        
+
         // Fetch files with comments separately
         const filesWithComments = await fetchFilesAsClient(id);
-        
+
         // Update workspace with files that include comments
         const workspaceWithComments = {
           ...data.workspace,
           files: filesWithComments
         };
-        
+
         setWorkspace(workspaceWithComments);
       } catch (err) {
         console.error("Error fetching shared workspace:", err);
@@ -507,14 +507,14 @@ const SharedWorkspaceView: React.FC = () => {
     // Listen for invoice created
     const handleInvoiceCreated = (data: any) => {
       console.log('[SharedWorkspace] Invoice created event received:', data);
-      
+
       // Only show non-draft invoices to clients
       const isDraft = data.invoice.status?.toLowerCase() === 'draft';
       if (isDraft) {
         console.log('[SharedWorkspace] Skipping draft invoice display for client');
         return;
       }
-      
+
       setWorkspace(prev => {
         if (!prev) return prev;
         // Avoid duplicates
@@ -559,7 +559,7 @@ const SharedWorkspaceView: React.FC = () => {
         if (!prev) return prev;
         return {
           ...prev,
-          todos: prev.todos.map(t => 
+          todos: prev.todos.map(t =>
             t.id === data.task.id ? data.task : t
           )
         };
@@ -949,9 +949,9 @@ const SharedWorkspaceView: React.FC = () => {
                                   )}
                                 </Button>
                                 {isPreviewable(file.filename) && (
-                                  <Button 
-                                    variant="ghost" 
-                                    size="icon" 
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
                                     className="rounded-full"
                                     onClick={() => handlePreviewFile(file.id, file.filename)}
                                     title="Preview file"
@@ -959,9 +959,9 @@ const SharedWorkspaceView: React.FC = () => {
                                     <Eye className="h-4 w-4" />
                                   </Button>
                                 )}
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
                                   className="rounded-full"
                                   onClick={() => handleDownloadFile(file.id, file.filename)}
                                   title="Download file"
@@ -970,9 +970,9 @@ const SharedWorkspaceView: React.FC = () => {
                                 </Button>
                                 {/* Only show delete button if uploaded by client */}
                                 {file.uploadedBy === 'client' && (
-                                  <Button 
-                                    variant="ghost" 
-                                    size="icon" 
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
                                     className="rounded-full text-red-500 hover:text-red-600"
                                     onClick={() => openDeleteDialog(file.id, file.filename)}
                                     title="Delete file"
@@ -1181,51 +1181,51 @@ const SharedWorkspaceView: React.FC = () => {
                         {workspace.invoices
                           .filter(inv => inv.status?.toLowerCase() !== 'draft')
                           .map((invoice) => (
-                          <div
-                            key={invoice.id}
-                            onClick={() => {
-                              setSelectedInvoice(invoice);
-                              setIsPaymentModalOpen(true);
-                            }}
-                            className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-primary/20 hover:bg-primary/5 transition-all cursor-pointer"
-                          >
-                            <div className="flex items-center gap-4">
-                              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                                <Receipt className="h-6 w-6 text-primary" />
+                            <div
+                              key={invoice.id}
+                              onClick={() => {
+                                setSelectedInvoice(invoice);
+                                setIsPaymentModalOpen(true);
+                              }}
+                              className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-primary/20 hover:bg-primary/5 transition-all cursor-pointer"
+                            >
+                              <div className="flex items-center gap-4">
+                                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                                  <Receipt className="h-6 w-6 text-primary" />
+                                </div>
+                                <div>
+                                  <p className="font-semibold">
+                                    {invoice.invoiceNumber || `Invoice INV-${invoice.id.slice(0, 8).toUpperCase()}`}
+                                  </p>
+                                  <p className="text-sm text-gray-500">
+                                    Due {formatDate(invoice.dueDate)}
+                                  </p>
+                                </div>
                               </div>
-                              <div>
-                                <p className="font-semibold">
-                                  {invoice.invoiceNumber || `Invoice INV-${invoice.id.slice(0, 8).toUpperCase()}`}
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                  Due {formatDate(invoice.dueDate)}
-                                </p>
+                              <div className="flex items-center gap-4">
+                                <div className="text-right">
+                                  <p className="font-bold text-lg">${((invoice.amount || 0) * (1 + (invoice.taxPercentage || 0) / 100)).toFixed(2)}</p>
+                                  <Badge
+                                    variant="outline"
+                                    className={
+                                      invoice.status === "paid"
+                                        ? "bg-green-50 text-green-700 border-green-200"
+                                        : invoice.status === "sent"
+                                          ? "bg-blue-50 text-blue-700 border-blue-200"
+                                          : "bg-amber-50 text-amber-700 border-amber-200"
+                                    }
+                                  >
+                                    {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                                  </Badge>
+                                </div>
+                                {invoice.status !== "paid" && (
+                                  <Button variant="default" size="sm" className="rounded-full">
+                                    Pay Now
+                                  </Button>
+                                )}
                               </div>
                             </div>
-                            <div className="flex items-center gap-4">
-                              <div className="text-right">
-                                <p className="font-bold text-lg">${((invoice.amount || 0) * (1 + (invoice.taxPercentage || 0) / 100)).toFixed(2)}</p>
-                                <Badge
-                                  variant="outline"
-                                  className={
-                                    invoice.status === "paid"
-                                      ? "bg-green-50 text-green-700 border-green-200"
-                                      : invoice.status === "sent"
-                                        ? "bg-blue-50 text-blue-700 border-blue-200"
-                                        : "bg-amber-50 text-amber-700 border-amber-200"
-                                  }
-                                >
-                                  {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-                                </Badge>
-                              </div>
-                              {invoice.status !== "paid" && (
-                                <Button variant="default" size="sm" className="rounded-full">
-                                  Pay Now
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        ))}
+                          ))}
                       </div>
                     )}
                   </CardContent>
@@ -1364,7 +1364,7 @@ const SharedWorkspaceView: React.FC = () => {
                           className="w-full h-auto rounded-lg"
                         />
                       )}
-                      
+
                       {/* PDF Preview */}
                       {/\.pdf$/i.test(previewFile.filename) && (
                         <iframe
@@ -1373,7 +1373,7 @@ const SharedWorkspaceView: React.FC = () => {
                           title={previewFile.filename}
                         />
                       )}
-                      
+
                       {/* Text Preview */}
                       {/\.(txt|md)$/i.test(previewFile.filename) && (
                         <iframe
