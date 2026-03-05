@@ -101,7 +101,7 @@ export async function addFileComment(
                 body: JSON.stringify({ text }),
             }
         );
-        
+
         if (!response.ok) {
             console.error("Failed to add comment:", response.status);
             const errorData = await response.json().catch(() => ({}));
@@ -240,12 +240,12 @@ export async function deleteFileAsClient(shareToken: string, fileId: string): Pr
 
 // Get file download URL (works for both freelancer and client)
 export async function getFileDownloadUrl(
-    workspaceId: string, 
-    fileId: string, 
+    workspaceId: string,
+    fileId: string,
     shareToken?: string
 ): Promise<string | null> {
     try {
-        const url = shareToken 
+        const url = shareToken
             ? `${API_URL}/api/client/${shareToken}/files/${fileId}/download`
             : `${API_URL}/api/workspaces/${workspaceId}/files/${fileId}/download`;
 
@@ -263,5 +263,34 @@ export async function getFileDownloadUrl(
     } catch (error) {
         console.error("Error getting download URL:", error);
         return null;
+    }
+}
+
+/**
+ * Download a file by fetching it as a blob (works for cross-origin URLs like ImageKit).
+ * The browser's `download` attribute on <a> tags is ignored for cross-origin URLs,
+ * so we fetch the content and create an object URL instead.
+ */
+export async function downloadFileBlob(url: string, filename: string): Promise<boolean> {
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to fetch file');
+
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Clean up the object URL after a short delay
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+        return true;
+    } catch (error) {
+        console.error('Blob download error:', error);
+        return false;
     }
 }
