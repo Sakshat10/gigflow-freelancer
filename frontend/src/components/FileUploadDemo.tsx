@@ -102,7 +102,7 @@ export function FileUploadDemo({ workspaceId, shareToken, isClient = false }: Fi
 
       const data = await response.json();
       setFiles(prev => [data.file, ...prev]);
-      
+
       toast({
         title: 'Success',
         description: 'File uploaded successfully'
@@ -125,23 +125,23 @@ export function FileUploadDemo({ workspaceId, shareToken, isClient = false }: Fi
   const handleDownload = async (fileId: string, filename: string) => {
     try {
       const downloadUrl = await getFileDownloadUrl(workspaceId || '', fileId, shareToken);
-      
+
       if (!downloadUrl) {
         throw new Error('Failed to get download URL');
       }
-      
-      // Create download link
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
 
-      toast({
-        title: 'Success',
-        description: 'Download started'
-      });
+      // Fetch as blob for cross-origin downloads (ImageKit CDN)
+      const { downloadFileBlob } = await import('../services/fileService');
+      const success = await downloadFileBlob(downloadUrl, filename);
+
+      if (success) {
+        toast({
+          title: 'Success',
+          description: 'Download started'
+        });
+      } else {
+        throw new Error('Download failed');
+      }
     } catch (error) {
       toast({
         title: 'Download Failed',
@@ -166,7 +166,7 @@ export function FileUploadDemo({ workspaceId, shareToken, isClient = false }: Fi
       }
 
       setFiles(prev => prev.filter(f => f.id !== fileId));
-      
+
       toast({
         title: 'Success',
         description: 'File deleted successfully'
@@ -214,8 +214,8 @@ export function FileUploadDemo({ workspaceId, shareToken, isClient = false }: Fi
             className="flex-1"
             accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar,.7z,.js,.css,.html,.json"
           />
-          <Button 
-            onClick={loadFiles} 
+          <Button
+            onClick={loadFiles}
             disabled={loading}
             variant="outline"
             size="sm"
